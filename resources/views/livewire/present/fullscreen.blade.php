@@ -38,9 +38,10 @@
                 >
                     <template x-if="element.type === 'text'">
                         <div
-                            class="w-full h-full"
-                            :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-size: ${element.style?.fontSize || 24}px; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};`"
+                            class="w-full h-full overflow-hidden"
+                            :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};`"
                             x-html="element.content?.html || ''"
+                            x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
                         ></div>
                     </template>
                     <template x-if="element.type === 'image' && element.content?.src">
@@ -97,6 +98,8 @@
         </div>
     </div>
 </div>
+
+@include('slides::livewire.partials.auto-fit-text')
 
 <script>
 document.addEventListener('alpine:init', () => {

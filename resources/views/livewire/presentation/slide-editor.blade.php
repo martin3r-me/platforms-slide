@@ -93,10 +93,11 @@
                                         :contenteditable="editingId === element.id ? 'true' : 'false'"
                                         class="w-full h-full outline-none overflow-hidden transition-shadow"
                                         :class="editingId === element.id ? 'ring-1 ring-blue-400/30 bg-white/5' : ''"
-                                        :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-size: ${element.style?.fontSize || 24}px; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};`"
+                                        :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (editingId === element.id ? `font-size: ${element.style?.fontSize || 24}px;` : '')"
                                         x-html="element.content?.html || ''"
                                         x-on:blur="updateElementContent(element.id, $event.target.innerHTML)"
                                         x-on:input="debounceSave()"
+                                        x-effect="if (editingId !== element.id) { $nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18)) }"
                                     ></div>
                                 </template>
 
@@ -336,6 +337,8 @@
         </x-ui-page-sidebar>
     </x-slot>
 </x-ui-page>
+
+@include('slides::livewire.partials.auto-fit-text')
 
 @push('scripts')
 <script>
