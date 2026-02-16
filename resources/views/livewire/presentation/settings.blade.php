@@ -17,20 +17,20 @@
                 <div class="p-6 space-y-4">
                     <div>
                         <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Name</label>
-                        <x-ui-input-text wire:model="name" placeholder="Präsentationsname" />
+                        <x-ui-input-text name="name" wire:model="name" placeholder="Präsentationsname" />
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Beschreibung</label>
-                        <x-ui-input-textarea wire:model="description" placeholder="Optionale Beschreibung..." rows="3" />
+                        <x-ui-input-textarea name="description" wire:model="description" placeholder="Optionale Beschreibung..." rows="3" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Breite (px)</label>
-                            <x-ui-input-text type="number" wire:model="slideWidth" />
+                            <x-ui-input-text name="slideWidth" type="number" wire:model="slideWidth" />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Höhe (px)</label>
-                            <x-ui-input-text type="number" wire:model="slideHeight" />
+                            <x-ui-input-text name="slideHeight" type="number" wire:model="slideHeight" />
                         </div>
                     </div>
                 </div>
@@ -44,28 +44,28 @@
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Primärfarbe</label>
                             <div class="flex items-center gap-2">
                                 <input type="color" wire:model="colorPrimary" class="w-8 h-8 rounded border border-[var(--ui-border)] cursor-pointer" />
-                                <x-ui-input-text wire:model="colorPrimary" class="flex-1" />
+                                <x-ui-input-text name="colorPrimary" wire:model="colorPrimary" class="flex-1" />
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Akzentfarbe</label>
                             <div class="flex items-center gap-2">
                                 <input type="color" wire:model="colorAccent" class="w-8 h-8 rounded border border-[var(--ui-border)] cursor-pointer" />
-                                <x-ui-input-text wire:model="colorAccent" class="flex-1" />
+                                <x-ui-input-text name="colorAccent" wire:model="colorAccent" class="flex-1" />
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Textfarbe</label>
                             <div class="flex items-center gap-2">
                                 <input type="color" wire:model="colorText" class="w-8 h-8 rounded border border-[var(--ui-border)] cursor-pointer" />
-                                <x-ui-input-text wire:model="colorText" class="flex-1" />
+                                <x-ui-input-text name="colorText" wire:model="colorText" class="flex-1" />
                             </div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Hintergrundfarbe</label>
                             <div class="flex items-center gap-2">
                                 <input type="color" wire:model="colorBackground" class="w-8 h-8 rounded border border-[var(--ui-border)] cursor-pointer" />
-                                <x-ui-input-text wire:model="colorBackground" class="flex-1" />
+                                <x-ui-input-text name="colorBackground" wire:model="colorBackground" class="flex-1" />
                             </div>
                         </div>
                     </div>
