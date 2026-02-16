@@ -93,7 +93,7 @@
                                         :contenteditable="editingId === element.id ? 'true' : 'false'"
                                         class="w-full h-full outline-none overflow-hidden transition-shadow"
                                         :class="editingId === element.id ? 'ring-1 ring-blue-400/30 bg-white/5' : ''"
-                                        :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (editingId === element.id ? `font-size: ${element.style?.fontSize || 24}px;` : '')"
+                                        :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (editingId === element.id ? `font-size: ${element.style?.fontSize || 24}px;` : '')"
                                         x-html="element.content?.html || ''"
                                         x-on:blur="updateElementContent(element.id, $event.target.innerHTML)"
                                         x-on:input="debounceSave()"
@@ -339,6 +339,12 @@
 </x-ui-page>
 
 @include('slides::livewire.partials.auto-fit-text')
+
+@once
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+@endonce
 
 @push('scripts')
 <script>

@@ -23,8 +23,8 @@ class Settings extends Component
     public string $colorAccent = '#0f3460';
     public string $colorText = '#1a1a2e';
     public string $colorBackground = '#ffffff';
-    public string $fontHeading = 'Inter';
-    public string $fontBody = 'Inter';
+    public string $fontHeading = 'Open Sans';
+    public string $fontBody = 'Open Sans';
 
     public function mount(SlidesPresentation $slidesPresentation)
     {
@@ -43,8 +43,8 @@ class Settings extends Component
         $this->colorAccent = $theme['colors']['accent'] ?? '#0f3460';
         $this->colorText = $theme['colors']['text'] ?? '#1a1a2e';
         $this->colorBackground = $theme['colors']['background'] ?? '#ffffff';
-        $this->fontHeading = $theme['fonts']['heading'] ?? 'Inter';
-        $this->fontBody = $theme['fonts']['body'] ?? 'Inter';
+        $this->fontHeading = $theme['fonts']['heading'] ?? 'Open Sans';
+        $this->fontBody = $theme['fonts']['body'] ?? 'Open Sans';
     }
 
     public function save()

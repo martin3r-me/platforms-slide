@@ -46,7 +46,7 @@
                             <template x-if="element.type === 'text'">
                                 <div
                                     class="w-full h-full overflow-hidden"
-                                    :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4};`"
+                                    :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4};`"
                                     x-html="element.content?.html || ''"
                                     x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
                                 ></div>
@@ -83,7 +83,7 @@
                                 <template x-if="element.type === 'text'">
                                     <div
                                         class="w-full h-full overflow-hidden"
-                                        :style="`font-family: ${element.style?.fontFamily || 'Inter'}; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4};`"
+                                        :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4};`"
                                         x-html="element.content?.html || ''"
                                         x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
                                     ></div>
@@ -121,6 +121,12 @@
 </div>
 
 @include('slides::livewire.partials.auto-fit-text')
+
+@once
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+@endonce
 
 <script>
 document.addEventListener('alpine:init', () => {

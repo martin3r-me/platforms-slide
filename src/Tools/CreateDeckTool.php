@@ -49,7 +49,7 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 ],
                 'theme' => [
                     'type' => 'object',
-                    'description' => 'Optional: Theme-Konfiguration. Beispiel: {"colors": {"primary": "#1a1a2e", "accent": "#0f3460"}, "fonts": {"heading": "Inter", "body": "Inter"}}',
+                    'description' => 'Optional: Theme-Konfiguration. Beispiel: {"colors": {"primary": "#1a1a2e", "accent": "#0f3460"}, "fonts": {"heading": "Open Sans", "body": "Open Sans"}}',
                 ],
                 'slide_width' => [
                     'type' => 'integer',

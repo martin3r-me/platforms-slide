@@ -73,6 +73,9 @@
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Überschrift-Font</label>
                             <x-ui-input-select wire:model="fontHeading">
+                                <option value="Open Sans">Open Sans</option>
+                                <option value="Source Sans 3">Source Sans 3</option>
+                                <option value="Nunito Sans">Nunito Sans</option>
                                 <option value="Inter">Inter</option>
                                 <option value="Arial">Arial</option>
                                 <option value="Georgia">Georgia</option>
@@ -84,6 +87,9 @@
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Text-Font</label>
                             <x-ui-input-select wire:model="fontBody">
+                                <option value="Open Sans">Open Sans</option>
+                                <option value="Source Sans 3">Source Sans 3</option>
+                                <option value="Nunito Sans">Nunito Sans</option>
                                 <option value="Inter">Inter</option>
                                 <option value="Arial">Arial</option>
                                 <option value="Georgia">Georgia</option>

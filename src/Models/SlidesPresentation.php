@@ -83,8 +83,8 @@ class SlidesPresentation extends Model
                 'background' => '#ffffff',
             ],
             'fonts' => [
-                'heading' => 'Inter',
-                'body' => 'Inter',
+                'heading' => 'Open Sans',
+                'body' => 'Open Sans',
             ],
             'defaultBackground' => [
                 'type' => 'color',
