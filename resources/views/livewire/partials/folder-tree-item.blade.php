@@ -1,0 +1,60 @@
+@php
+    $hasChildren = $folder->children()->exists();
+    $isExpanded = in_array($folder->id, $this->expandedFolders);
+    $paddingLeft = $level >= 2 ? (($level - 2) * 0.5) + 0.25 : 0;
+@endphp
+
+<div class="folder-item" style="padding-left: {{ $paddingLeft }}rem;">
+    <div class="flex items-center group">
+        @if($hasChildren)
+            <button
+                type="button"
+                wire:click="toggleFolder({{ $folder->id }})"
+                wire:loading.attr="disabled"
+                x-on:click="$wire.toggleFolder({{ $folder->id }}).then(() => {
+                    const expanded = $wire.get('expandedFolders');
+                    localStorage.setItem('slides.expandedFolders', JSON.stringify(expanded));
+                })"
+                class="flex-shrink-0 p-0.5 mr-0.5 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+            >
+                @if($isExpanded)
+                    @svg('heroicon-o-chevron-down', 'w-3 h-3')
+                @else
+                    @svg('heroicon-o-chevron-right', 'w-3 h-3')
+                @endif
+            </button>
+        @else
+            <span class="w-3 mr-0.5"></span>
+        @endif
+
+        <a
+            href="{{ route('slides.folders.show', ['slidesFolder' => $folder]) }}"
+            wire:navigate
+            class="flex items-center flex-1 min-w-0 py-0.5 px-0.5 rounded-md hover:bg-[var(--ui-muted-5)] transition-colors"
+        >
+            @if($isExpanded)
+                @svg('heroicon-o-folder-open', 'w-3.5 h-3.5 flex-shrink-0 text-[var(--ui-secondary)]')
+            @else
+                @svg('heroicon-o-folder', 'w-3.5 h-3.5 flex-shrink-0 text-[var(--ui-secondary)]')
+            @endif
+            <div class="flex-1 min-w-0 ml-0.5">
+                <div class="truncate text-xs font-medium leading-tight">{{ $folder->name }}</div>
+            </div>
+        </a>
+    </div>
+
+    @if($hasChildren && $isExpanded)
+        @php
+            $children = $folder->children()
+                ->orderBy('name')
+                ->get()
+                ->filter(fn($child) => auth()->user()->can('view', $child));
+        @endphp
+        @foreach($children as $child)
+            @include('slides::livewire.partials.folder-tree-item', [
+                'folder' => $child,
+                'level' => $level + 1
+            ])
+        @endforeach
+    @endif
+</div>
