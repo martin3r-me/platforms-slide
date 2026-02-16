@@ -46,7 +46,7 @@
                             <template x-if="element.type === 'text'">
                                 <div
                                     class="w-full h-full overflow-hidden"
-                                    :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4};`"
+                                    :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (element.style?.letterSpacing ? `letter-spacing: ${element.style.letterSpacing}px;` : '')"
                                     x-html="element.content?.html || ''"
                                     x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
                                 ></div>
@@ -83,7 +83,7 @@
                                 <template x-if="element.type === 'text'">
                                     <div
                                         class="w-full h-full overflow-hidden"
-                                        :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4};`"
+                                        :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (element.style?.letterSpacing ? `letter-spacing: ${element.style.letterSpacing}px;` : '')"
                                         x-html="element.content?.html || ''"
                                         x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
                                     ></div>

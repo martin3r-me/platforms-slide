@@ -65,6 +65,22 @@ class SlidesOverviewTool implements ToolContract, ToolMetadataContract
                     'placeholders' => [
                         'description' => 'Platzhalter (Zones) in Slide-Templates, die dynamisch befüllt werden können.',
                         'how_it_works' => 'Jedes Element mit einer "zone"-Eigenschaft ist ein befüllbarer Platzhalter. Nutze slides.slide.content.PUT um Werte einzusetzen.',
+                        'value_formats' => [
+                            'string' => 'Einfacher String-Wert: {"title": "Mein Titel"}',
+                            'object' => 'Objekt mit Style-Overrides: {"title": {"value": "Mein Titel", "fontSize": 96, "color": "#FF0000", "align": "center"}}',
+                        ],
+                        'style_overrides' => [
+                            'description' => 'Pro Platzhalter können individuelle Styles gesetzt werden, die Theme/Template-Defaults überschreiben.',
+                            'allowed_properties' => [
+                                'fontSize' => 'Schriftgröße in px (z.B. 96)',
+                                'color' => 'Textfarbe als Hex (z.B. #FF0000)',
+                                'align' => 'Textausrichtung (left, center, right)',
+                                'fontWeight' => 'Schriftstärke (z.B. 400, 700, bold)',
+                                'fontStyle' => 'Schriftstil (normal, italic)',
+                                'letterSpacing' => 'Buchstabenabstand in px (z.B. 2)',
+                                'lineHeight' => 'Zeilenhöhe (z.B. 1.2, 1.5)',
+                            ],
+                        ],
                         'common_zones' => [
                             'title' => 'Titel-Text',
                             'subtitle' => 'Untertitel-Text',

@@ -26,7 +26,7 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /slides/{id}/content - Befüllt die Platzhalter eines Slides mit Werten. WICHTIG: Nutze "slides.deck.GET" oder "slides.slides.GET" um die verfügbaren Platzhalter (zones) eines Slides zu sehen, bevor du dieses Tool nutzt. REST-Parameter: slide_id (required, integer). placeholders (required, object) - Key-Value-Paare von Zone-Name zu Inhalt.';
+        return 'PUT /slides/{id}/content - Befüllt die Platzhalter eines Slides mit Werten. WICHTIG: Nutze "slides.deck.GET" oder "slides.slides.GET" um die verfügbaren Platzhalter (zones) eines Slides zu sehen, bevor du dieses Tool nutzt. REST-Parameter: slide_id (required, integer). placeholders (required, object) - Key-Value-Paare von Zone-Name zu Inhalt. Werte können einfache Strings sein ODER Objekte mit Style-Overrides: {"title": {"value": "Mein Titel", "fontSize": 96, "color": "#FF0000", "align": "center"}}. Erlaubte Style-Properties: fontSize, color, align, fontWeight, fontStyle, letterSpacing, lineHeight.';
     }
 
     public function getSchema(): array
@@ -40,9 +40,29 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
                 ],
                 'placeholders' => [
                     'type' => 'object',
-                    'description' => 'Key-Value-Paare zum Befüllen der Platzhalter. Keys sind Zone-Namen (z.B. "title", "body", "bullets", "media"), Values sind die einzufügenden Inhalte. Für Text-Zonen: String mit dem Text. Für Bild-Zonen: String mit der Bild-URL. Für Aufzählungen: Zeilenumbruch-getrennte Punkte. Beispiel: {"title": "Mein Titel", "body": "Mein Text", "bullets": "Punkt 1\nPunkt 2\nPunkt 3", "media": "https://example.com/image.jpg"}',
+                    'description' => 'Key-Value-Paare zum Befüllen der Platzhalter. Keys sind Zone-Namen (z.B. "title", "body", "bullets", "media"). '
+                        . 'Values können sein: (1) String mit dem Text/URL, (2) Objekt mit "value" und optionalen Style-Overrides. '
+                        . 'Beispiel String-Format: {"title": "Mein Titel", "body": "Mein Text"} '
+                        . 'Beispiel Objekt-Format: {"title": {"value": "Mein Titel", "fontSize": 96, "color": "#FF0000", "align": "center"}, "body": "Einfacher Text bleibt String"} '
+                        . 'Erlaubte Style-Properties: fontSize (number, px), color (string, hex), align (string: left/center/right), fontWeight (string/number), fontStyle (string: normal/italic), letterSpacing (number, px), lineHeight (number).',
                     'additionalProperties' => [
-                        'type' => 'string',
+                        'oneOf' => [
+                            ['type' => 'string'],
+                            [
+                                'type' => 'object',
+                                'properties' => [
+                                    'value' => ['type' => 'string', 'description' => 'Der Textinhalt oder die Bild-URL'],
+                                    'fontSize' => ['type' => 'number', 'description' => 'Schriftgröße in px'],
+                                    'color' => ['type' => 'string', 'description' => 'Textfarbe (Hex, z.B. #FF0000)'],
+                                    'align' => ['type' => 'string', 'enum' => ['left', 'center', 'right'], 'description' => 'Textausrichtung'],
+                                    'fontWeight' => ['type' => ['string', 'number'], 'description' => 'Schriftstärke (z.B. 400, 700, bold)'],
+                                    'fontStyle' => ['type' => 'string', 'enum' => ['normal', 'italic'], 'description' => 'Schriftstil'],
+                                    'letterSpacing' => ['type' => 'number', 'description' => 'Buchstabenabstand in px'],
+                                    'lineHeight' => ['type' => 'number', 'description' => 'Zeilenhöhe (z.B. 1.2, 1.5)'],
+                                ],
+                                'required' => ['value'],
+                            ],
+                        ],
                     ],
                 ],
             ],
@@ -80,6 +100,31 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
             $availablePlaceholders = $slide->getPlaceholders();
             $availableZones = array_column($availablePlaceholders, 'zone');
 
+            // Validate style properties in object-format placeholders
+            $invalidStyles = [];
+            foreach ($arguments['placeholders'] as $zone => $value) {
+                if (is_array($value) && array_key_exists('value', $value)) {
+                    $unknownProps = array_diff(
+                        array_keys(array_diff_key($value, ['value' => true])),
+                        SlidesSlide::ALLOWED_STYLE_OVERRIDES
+                    );
+                    if (!empty($unknownProps)) {
+                        $invalidStyles[$zone] = $unknownProps;
+                    }
+                }
+            }
+
+            if (!empty($invalidStyles)) {
+                $details = [];
+                foreach ($invalidStyles as $zone => $props) {
+                    $details[] = "{$zone}: " . implode(', ', $props);
+                }
+                return ToolResult::error('VALIDATION_ERROR',
+                    'Ungültige Style-Properties: ' . implode('; ', $details)
+                    . '. Erlaubt: ' . implode(', ', SlidesSlide::ALLOWED_STYLE_OVERRIDES) . '.'
+                );
+            }
+
             // Fill placeholders
             $results = [];
             $unknownZones = [];
@@ -98,6 +143,20 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
             $filledCount = count(array_filter($results));
             $failedCount = count($results) - $filledCount;
 
+            // Track which zones had style overrides
+            $styleOverridesApplied = [];
+            foreach ($arguments['placeholders'] as $zone => $value) {
+                if (is_array($value) && array_key_exists('value', $value)) {
+                    $overrides = array_intersect_key(
+                        $value,
+                        array_flip(SlidesSlide::ALLOWED_STYLE_OVERRIDES)
+                    );
+                    if (!empty($overrides) && ($results[$zone] ?? false)) {
+                        $styleOverridesApplied[$zone] = array_keys($overrides);
+                    }
+                }
+            }
+
             $response = [
                 'slide_id' => $slide->id,
                 'deck_id' => $slide->presentation_id,
@@ -107,6 +166,10 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
                 'failed_count' => $failedCount,
                 'placeholders_after' => $slide->getPlaceholders(),
             ];
+
+            if (!empty($styleOverridesApplied)) {
+                $response['style_overrides_applied'] = $styleOverridesApplied;
+            }
 
             if (!empty($unknownZones)) {
                 $response['unknown_zones'] = $unknownZones;
