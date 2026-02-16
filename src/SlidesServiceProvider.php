@@ -59,6 +59,43 @@ class SlidesServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'slides');
         $this->registerLivewireComponents();
         $this->registerPolicies();
+
+        // Tools registrieren (loose gekoppelt - für AI/Chat)
+        $this->registerTools();
+    }
+
+    /**
+     * Registriert Slides-Tools für die AI/Chat-Funktionalität.
+     * Folgt dem Vorbild des Planner-Moduls.
+     */
+    protected function registerTools(): void
+    {
+        try {
+            $registry = resolve(\Platform\Core\Tools\ToolRegistry::class);
+
+            // Overview-Tool
+            $registry->register(new \Platform\Slides\Tools\SlidesOverviewTool());
+
+            // Deck-Tools (Präsentationen)
+            $registry->register(new \Platform\Slides\Tools\ListDecksTool());
+            $registry->register(new \Platform\Slides\Tools\GetDeckTool());
+            $registry->register(new \Platform\Slides\Tools\CreateDeckTool());
+            $registry->register(new \Platform\Slides\Tools\UpdateDeckTool());
+            $registry->register(new \Platform\Slides\Tools\DeleteDeckTool());
+
+            // Slide-Tools
+            $registry->register(new \Platform\Slides\Tools\ListSlidesTool());
+            $registry->register(new \Platform\Slides\Tools\CreateSlideTool());
+            $registry->register(new \Platform\Slides\Tools\UpdateSlideTool());
+            $registry->register(new \Platform\Slides\Tools\DeleteSlideTool());
+            $registry->register(new \Platform\Slides\Tools\SortSlidesTool());
+
+            // Content-Tool (Platzhalter befüllen)
+            $registry->register(new \Platform\Slides\Tools\FillSlideContentTool());
+        } catch (\Throwable $e) {
+            // Silent fail - ToolRegistry möglicherweise nicht verfügbar
+            \Log::warning('Slides: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
+        }
     }
 
     protected function registerLivewireComponents(): void
