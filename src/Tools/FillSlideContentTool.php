@@ -125,12 +125,21 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
                 );
             }
 
+            // Include legacy stat zones as valid when their mapped zones exist
+            $legacyStatZones = SlidesSlide::getLegacyStatZones();
+            $effectiveZones = $availableZones;
+            foreach ($legacyStatZones as $legacyZone => [$valueZone, $labelZone]) {
+                if (in_array($valueZone, $availableZones) && !in_array($legacyZone, $effectiveZones)) {
+                    $effectiveZones[] = $legacyZone;
+                }
+            }
+
             // Fill placeholders
             $results = [];
             $unknownZones = [];
 
             foreach ($arguments['placeholders'] as $zone => $value) {
-                if (!in_array($zone, $availableZones)) {
+                if (!in_array($zone, $effectiveZones)) {
                     $unknownZones[] = $zone;
                     $results[$zone] = false;
                     continue;

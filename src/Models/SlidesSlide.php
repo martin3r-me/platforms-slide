@@ -170,15 +170,41 @@ class SlidesSlide extends Model
     }
 
     /**
+     * Legacy stat zone mapping: stat_N → stat_N_value + stat_N_label.
+     * When filling a legacy stat_N zone, the value is split on \n and
+     * distributed to the separate value/label zones.
+     */
+    protected const LEGACY_STAT_ZONES = [
+        'stat_1' => ['stat_1_value', 'stat_1_label'],
+        'stat_2' => ['stat_2_value', 'stat_2_label'],
+        'stat_3' => ['stat_3_value', 'stat_3_label'],
+        'stat_4' => ['stat_4_value', 'stat_4_label'],
+    ];
+
+    public static function getLegacyStatZones(): array
+    {
+        return self::LEGACY_STAT_ZONES;
+    }
+
+    /**
      * Fill a specific placeholder zone with new content.
      *
      * Accepts string values (backward compatible) or object values with style overrides:
      *   { "value": "My Title", "fontSize": 96, "color": "#FF0000", "align": "left" }
      *
+     * Legacy stat zones (stat_1 through stat_4) are automatically mapped to the
+     * separate stat_N_value and stat_N_label zones. Values containing \n are split
+     * into value (before \n) and label (after \n).
+     *
      * Returns true if the zone was found and filled.
      */
     public function fillPlaceholder(string $zone, string|array $value): bool
     {
+        // Legacy stat zone backward compatibility
+        if (isset(self::LEGACY_STAT_ZONES[$zone])) {
+            return $this->fillLegacyStatZone($zone, $value);
+        }
+
         $content = $this->content ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
         $found = false;
 
@@ -241,6 +267,40 @@ class SlidesSlide extends Model
         }
 
         return $found;
+    }
+
+    /**
+     * Handle backward-compatible filling of legacy stat_N zones.
+     * Splits the value on \n and fills stat_N_value + stat_N_label.
+     */
+    protected function fillLegacyStatZone(string $zone, string|array $value): bool
+    {
+        [$valueZone, $labelZone] = self::LEGACY_STAT_ZONES[$zone];
+
+        $normalized = $this->normalizePlaceholderValue($value);
+        $textValue = $normalized[0];
+        $styleOverrides = $normalized[1];
+
+        // If legacy array format (no 'value' key), just pass through to value zone
+        if ($textValue === null && isset($normalized[2])) {
+            return $this->fillPlaceholder($valueZone, $value);
+        }
+
+        if (is_string($textValue) && str_contains($textValue, "\n")) {
+            $parts = explode("\n", $textValue, 2);
+            $statValue = trim($parts[0]);
+            $statLabel = trim($parts[1]);
+
+            $valueResult = $this->fillPlaceholder($valueZone, !empty($styleOverrides)
+                ? array_merge(['value' => $statValue], $styleOverrides)
+                : $statValue);
+            $labelResult = $this->fillPlaceholder($labelZone, $statLabel);
+
+            return $valueResult || $labelResult;
+        }
+
+        // No \n: fill value zone with the entire text, leave label as is
+        return $this->fillPlaceholder($valueZone, $value);
     }
 
     /**
