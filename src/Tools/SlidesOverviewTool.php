@@ -78,6 +78,14 @@ class SlidesOverviewTool implements ToolContract, ToolMetadataContract
                             'notes' => 'Speaker Notes',
                             'sort_order' => 'Reihenfolge im Deck',
                             'is_hidden' => 'Ausgeblendet in Präsentation',
+                            'col_ratio' => 'Spalten-Verhältnis für two-column Layout (z.B. "60:40", "70:30"). Standard: "50:50".',
+                        ],
+                        'col_ratio' => [
+                            'description' => 'Konfigurierbares Spalten-Verhältnis für das two-column Layout.',
+                            'format' => '"links:rechts" - z.B. "60:40", "40:60", "70:30", "33:67"',
+                            'default' => '50:50',
+                            'constraints' => 'Summe muss 100 ergeben, Minimum pro Spalte: 10',
+                            'usage' => 'Beim Erstellen (slides.slides.POST) oder Aktualisieren (slides.slides.PUT) eines Slides mit layout_key "two-column" als col_ratio Parameter angeben.',
                         ],
                     ],
                     'placeholders' => [

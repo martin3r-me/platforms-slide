@@ -81,6 +81,10 @@ class ListSlidesTool implements ToolContract, ToolMetadataContract
                     'duration_seconds' => $slide->duration_seconds,
                 ];
 
+                if ($slide->layout_key === 'two-column') {
+                    $data['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';
+                }
+
                 if ($includeContent) {
                     $data['content'] = $slide->content;
                 }

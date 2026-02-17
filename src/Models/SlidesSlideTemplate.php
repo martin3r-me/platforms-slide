@@ -107,6 +107,73 @@ class SlidesSlideTemplate extends Model
     }
 
     /**
+     * Parse a col_ratio string like "60:40" into a [left, right] percentage array.
+     * Returns null if the format is invalid.
+     */
+    public static function parseColRatio(string $ratio): ?array
+    {
+        if (!preg_match('/^(\d{1,2}|100):(\d{1,2}|100)$/', $ratio, $matches)) {
+            return null;
+        }
+
+        $left = (int) $matches[1];
+        $right = (int) $matches[2];
+
+        if ($left + $right !== 100 || $left < 10 || $right < 10) {
+            return null;
+        }
+
+        return [$left, $right];
+    }
+
+    /**
+     * Apply a column ratio to a two-column layout content structure.
+     * Recalculates x, width for col_left and col_right elements.
+     * Stores the ratio in content['col_ratio'] for reference.
+     *
+     * Layout constants (1920px slide width):
+     *   - Content margin: 80px each side
+     *   - Total content width: 1760px
+     *   - Gap between columns: 40px
+     *   - Available column space: 1720px (1760 - 40)
+     */
+    public static function applyColRatio(array $content, string $ratio): array
+    {
+        $parsed = self::parseColRatio($ratio);
+        if (!$parsed || empty($content['elements'])) {
+            return $content;
+        }
+
+        [$leftPct, $rightPct] = $parsed;
+
+        $marginLeft = 80;
+        $totalWidth = 1760;
+        $gap = 40;
+        $availableWidth = $totalWidth - $gap;
+
+        $leftWidth = (int) round($availableWidth * $leftPct / 100);
+        $rightWidth = $availableWidth - $leftWidth;
+
+        $leftX = $marginLeft;
+        $rightX = $marginLeft + $leftWidth + $gap;
+
+        foreach ($content['elements'] as &$element) {
+            $zone = $element['zone'] ?? null;
+            if ($zone === 'col_left') {
+                $element['x'] = $leftX;
+                $element['width'] = $leftWidth;
+            } elseif ($zone === 'col_right') {
+                $element['x'] = $rightX;
+                $element['width'] = $rightWidth;
+            }
+        }
+
+        $content['col_ratio'] = $ratio;
+
+        return $content;
+    }
+
+    /**
      * Returns all 12 system layout definitions.
      */
     public static function systemLayouts(): array

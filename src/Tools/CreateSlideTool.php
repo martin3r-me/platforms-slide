@@ -23,7 +23,7 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'POST /decks/{deck_id}/slides - Erstellt einen neuen Slide in einem Deck. REST-Parameter: deck_id (required), layout_key (optional, string - Standard: content-text). Verfügbare Layouts: title-center, title-left, section-break, content-text, content-bullets, two-column, image-right, image-left, image-full, quote, stats, closing. position (optional, integer) - Position im Deck (Standard: Ende).';
+        return 'POST /decks/{deck_id}/slides - Erstellt einen neuen Slide in einem Deck. REST-Parameter: deck_id (required), layout_key (optional, string - Standard: content-text). Verfügbare Layouts: title-center, title-left, section-break, content-text, content-bullets, two-column, image-right, image-left, image-full, quote, stats, closing. position (optional, integer) - Position im Deck (Standard: Ende). col_ratio (optional, string) - Spalten-Verhältnis für two-column Layout, z.B. "60:40", "40:60", "70:30". Standard: "50:50".';
     }
 
     public function getSchema(): array
@@ -54,6 +54,10 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
                 'transition' => [
                     'type' => 'string',
                     'description' => 'Optional: Übergangs-Effekt (fade, slide-left, slide-right, slide-up, zoom).',
+                ],
+                'col_ratio' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Spalten-Verhältnis für two-column Layout. Format: "links:rechts", z.B. "60:40", "40:60", "70:30", "33:67". Summe muss 100 ergeben, Minimum pro Spalte: 10. Standard: "50:50".',
                 ],
             ],
             'required' => ['deck_id'],
@@ -107,6 +111,18 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
             $themeFontSizes = $deck->theme['fontSizes'] ?? [];
             $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
 
+            // Apply col_ratio for two-column layout
+            $colRatio = $arguments['col_ratio'] ?? null;
+            if ($colRatio !== null) {
+                if ($layoutKey !== 'two-column') {
+                    return ToolResult::error('VALIDATION_ERROR', 'col_ratio ist nur für das Layout "two-column" verfügbar.');
+                }
+                if (!SlidesSlideTemplate::parseColRatio($colRatio)) {
+                    return ToolResult::error('VALIDATION_ERROR', 'Ungültiges col_ratio Format. Erwartet: "links:rechts" (z.B. "60:40"). Summe muss 100 ergeben, Minimum pro Spalte: 10.');
+                }
+                $content = SlidesSlideTemplate::applyColRatio($content, $colRatio);
+            }
+
             $slideData = [
                 'sort_order' => $position,
                 'layout_key' => $layoutKey,
@@ -118,7 +134,7 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
 
             $slide = $deck->slides()->create($slideData);
 
-            return ToolResult::success([
+            $response = [
                 'id' => $slide->id,
                 'uuid' => $slide->uuid,
                 'deck_id' => $deck->id,
@@ -131,7 +147,13 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
                 'created_at' => $slide->created_at->toIso8601String(),
                 'message' => "Slide mit Layout '{$layoutKey}' an Position {$position} erstellt.",
                 'hint' => 'Nutze "slides.slide.content.PUT" um die Platzhalter dieses Slides mit Inhalten zu befüllen.',
-            ]);
+            ];
+
+            if ($slide->layout_key === 'two-column') {
+                $response['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';
+            }
+
+            return ToolResult::success($response);
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', 'Fehler beim Erstellen des Slides: ' . $e->getMessage());
         }

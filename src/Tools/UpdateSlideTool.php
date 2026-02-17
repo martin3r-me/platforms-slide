@@ -23,7 +23,7 @@ class UpdateSlideTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /slides/{id} - Aktualisiert einen bestehenden Slide. REST-Parameter: slide_id (required, integer). layout_key (optional, string) - Layout wechseln. background (optional, object). notes (optional, string). transition (optional, string). is_hidden (optional, boolean).';
+        return 'PUT /slides/{id} - Aktualisiert einen bestehenden Slide. REST-Parameter: slide_id (required, integer). layout_key (optional, string) - Layout wechseln. background (optional, object). notes (optional, string). transition (optional, string). is_hidden (optional, boolean). col_ratio (optional, string) - Spalten-Verhältnis für two-column Layout, z.B. "60:40", "40:60", "70:30". Standard: "50:50".';
     }
 
     public function getSchema(): array
@@ -58,6 +58,10 @@ class UpdateSlideTool implements ToolContract, ToolMetadataContract
                 'duration_seconds' => [
                     'type' => 'integer',
                     'description' => 'Optional: Anzeigedauer in Sekunden.',
+                ],
+                'col_ratio' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Spalten-Verhältnis für two-column Layout. Format: "links:rechts", z.B. "60:40", "40:60", "70:30", "33:67". Summe muss 100 ergeben, Minimum pro Spalte: 10. Standard: "50:50".',
                 ],
             ],
             'required' => ['slide_id'],
@@ -121,13 +125,26 @@ class UpdateSlideTool implements ToolContract, ToolMetadataContract
                 $updateData['duration_seconds'] = $arguments['duration_seconds'];
             }
 
+            // Apply col_ratio for two-column layout
+            if (isset($arguments['col_ratio'])) {
+                $effectiveLayoutKey = $updateData['layout_key'] ?? $slide->layout_key;
+                if ($effectiveLayoutKey !== 'two-column') {
+                    return ToolResult::error('VALIDATION_ERROR', 'col_ratio ist nur für das Layout "two-column" verfügbar.');
+                }
+                if (!SlidesSlideTemplate::parseColRatio($arguments['col_ratio'])) {
+                    return ToolResult::error('VALIDATION_ERROR', 'Ungültiges col_ratio Format. Erwartet: "links:rechts" (z.B. "60:40"). Summe muss 100 ergeben, Minimum pro Spalte: 10.');
+                }
+                $contentToModify = $updateData['content'] ?? $slide->content;
+                $updateData['content'] = SlidesSlideTemplate::applyColRatio($contentToModify, $arguments['col_ratio']);
+            }
+
             if (!empty($updateData)) {
                 $slide->update($updateData);
             }
 
             $slide->refresh();
 
-            return ToolResult::success([
+            $response = [
                 'id' => $slide->id,
                 'uuid' => $slide->uuid,
                 'deck_id' => $slide->presentation_id,
@@ -141,7 +158,13 @@ class UpdateSlideTool implements ToolContract, ToolMetadataContract
                 'duration_seconds' => $slide->duration_seconds,
                 'updated_at' => $slide->updated_at->toIso8601String(),
                 'message' => 'Slide erfolgreich aktualisiert.',
-            ]);
+            ];
+
+            if ($slide->layout_key === 'two-column') {
+                $response['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';
+            }
+
+            return ToolResult::success($response);
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', 'Fehler beim Aktualisieren des Slides: ' . $e->getMessage());
         }

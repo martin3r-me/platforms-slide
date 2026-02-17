@@ -176,6 +176,10 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
                 'placeholders_after' => $slide->getPlaceholders(),
             ];
 
+            if ($slide->layout_key === 'two-column') {
+                $response['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';
+            }
+
             if (!empty($styleOverridesApplied)) {
                 $response['style_overrides_applied'] = $styleOverridesApplied;
             }

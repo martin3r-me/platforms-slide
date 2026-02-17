@@ -65,7 +65,7 @@ class GetDeckTool implements ToolContract, ToolMetadataContract
             }
 
             $slides = $deck->slides->map(function ($slide) {
-                return [
+                $data = [
                     'id' => $slide->id,
                     'uuid' => $slide->uuid,
                     'sort_order' => $slide->sort_order,
@@ -77,6 +77,12 @@ class GetDeckTool implements ToolContract, ToolMetadataContract
                     'is_hidden' => $slide->is_hidden,
                     'duration_seconds' => $slide->duration_seconds,
                 ];
+
+                if ($slide->layout_key === 'two-column') {
+                    $data['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';
+                }
+
+                return $data;
             })->toArray();
 
             return ToolResult::success([
