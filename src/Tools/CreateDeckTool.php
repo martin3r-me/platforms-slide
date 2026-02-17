@@ -49,7 +49,7 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 ],
                 'theme' => [
                     'type' => 'object',
-                    'description' => 'Optional: Theme-Konfiguration. Beispiel: {"colors": {"primary": "#1a1a2e", "accent": "#0f3460"}, "fonts": {"heading": "Open Sans", "body": "Open Sans"}}',
+                    'description' => 'Optional: Theme-Konfiguration. Beispiel: {"colors": {"primary": "#1a1a2e", "accent": "#0f3460"}, "fonts": {"heading": "Open Sans", "body": "Open Sans"}, "fontSizes": {"title": 80, "subtitle": 40, "body": 32, "bullets": 30, "quote": 42, "stats_number": 96, "stats_label": 24, "section_title": 72, "contact": 24}}. fontSizes: Werte in px (min 12, max 200). Wenn nicht gesetzt, greifen System-Defaults.',
                 ],
                 'slide_width' => [
                     'type' => 'integer',
@@ -130,10 +130,15 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 $layoutKey = 'title-center';
             }
 
+            // Apply theme fontSizes to the template content
+            $content = $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
+            $themeFontSizes = $deck->theme['fontSizes'] ?? [];
+            $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
+
             $slide = $deck->slides()->create([
                 'sort_order' => 0,
                 'layout_key' => $layoutKey,
-                'content' => $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []],
+                'content' => $content,
                 'background' => $layout['background'] ?? ['type' => 'color', 'value' => '#ffffff'],
             ]);
 

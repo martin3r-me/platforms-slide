@@ -53,6 +53,56 @@ class SlidesSlideTemplate extends Model
     }
 
     /**
+     * Maps element zones to fontSizes theme keys.
+     * Used to resolve theme-level font sizes for each zone.
+     */
+    public const ZONE_FONT_SIZE_MAP = [
+        'title' => 'title',
+        'subtitle' => 'subtitle',
+        'description' => 'body',
+        'body' => 'body',
+        'bullets' => 'bullets',
+        'col_left' => 'body',
+        'col_right' => 'body',
+        'overlay_title' => 'section_title',
+        'overlay_text' => 'body',
+        'quote' => 'quote',
+        'author' => 'contact',
+        'stat_1' => 'stats_number',
+        'stat_2' => 'stats_number',
+        'stat_3' => 'stats_number',
+        'stat_4' => 'stats_number',
+        'contact' => 'contact',
+    ];
+
+    /**
+     * Applies theme fontSizes to a layout content structure.
+     * Returns a new content array with font sizes resolved from the theme.
+     * If no fontSizes are set in the theme, the template defaults remain.
+     */
+    public static function applyThemeFontSizes(array $content, array $themeFontSizes): array
+    {
+        if (empty($themeFontSizes) || empty($content['elements'])) {
+            return $content;
+        }
+
+        foreach ($content['elements'] as &$element) {
+            if ($element['type'] !== 'text' || empty($element['zone'])) {
+                continue;
+            }
+
+            $zone = $element['zone'];
+            $fontSizeKey = self::ZONE_FONT_SIZE_MAP[$zone] ?? null;
+
+            if ($fontSizeKey && isset($themeFontSizes[$fontSizeKey])) {
+                $element['style']['fontSize'] = $themeFontSizes[$fontSizeKey];
+            }
+        }
+
+        return $content;
+    }
+
+    /**
      * Returns all 12 system layout definitions.
      */
     public static function systemLayouts(): array

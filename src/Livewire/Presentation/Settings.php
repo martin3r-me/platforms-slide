@@ -58,28 +58,39 @@ class Settings extends Component
             'slideHeight' => 'required|integer|min:600|max:2160',
         ]);
 
+        // Preserve existing fontSizes and other theme data not managed by this UI
+        $existingTheme = $this->presentation->getAttributes()['theme'] ?? null;
+        $existingTheme = $existingTheme ? (is_array($existingTheme) ? $existingTheme : json_decode($existingTheme, true)) : [];
+
+        $theme = [
+            'colors' => [
+                'primary' => $this->colorPrimary,
+                'accent' => $this->colorAccent,
+                'text' => $this->colorText,
+                'background' => $this->colorBackground,
+            ],
+            'fonts' => [
+                'heading' => $this->fontHeading,
+                'body' => $this->fontBody,
+            ],
+            'defaultBackground' => [
+                'type' => 'color',
+                'value' => $this->colorBackground,
+            ],
+        ];
+
+        // Preserve fontSizes if they exist in the current theme
+        if (!empty($existingTheme['fontSizes'])) {
+            $theme['fontSizes'] = $existingTheme['fontSizes'];
+        }
+
         $this->presentation->update([
             'name' => $this->name,
             'description' => $this->description ?: null,
             'slide_width' => $this->slideWidth,
             'slide_height' => $this->slideHeight,
             'is_published' => $this->isPublished,
-            'theme' => [
-                'colors' => [
-                    'primary' => $this->colorPrimary,
-                    'accent' => $this->colorAccent,
-                    'text' => $this->colorText,
-                    'background' => $this->colorBackground,
-                ],
-                'fonts' => [
-                    'heading' => $this->fontHeading,
-                    'body' => $this->fontBody,
-                ],
-                'defaultBackground' => [
-                    'type' => 'color',
-                    'value' => $this->colorBackground,
-                ],
-            ],
+            'theme' => $theme,
         ]);
 
         session()->flash('success', 'Einstellungen gespeichert.');

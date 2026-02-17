@@ -105,9 +105,14 @@ class SlideEditor extends Component
             return;
         }
 
+        // Apply theme fontSizes to the template content
+        $content = $layout['content'];
+        $themeFontSizes = $this->presentation->theme['fontSizes'] ?? [];
+        $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
+
         $this->slide->update([
             'layout_key' => $layoutKey,
-            'content' => $layout['content'],
+            'content' => $content,
         ]);
 
         if (isset($layout['background'])) {

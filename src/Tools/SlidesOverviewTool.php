@@ -43,11 +43,29 @@ class SlidesOverviewTool implements ToolContract, ToolMetadataContract
                         'attributes' => [
                             'name' => 'Name der Präsentation',
                             'description' => 'Beschreibung (optional)',
-                            'theme' => 'Farben und Schriften (JSON)',
+                            'theme' => 'Farben, Schriften und Schriftgrößen (JSON)',
                             'slide_width' => 'Breite in Pixel (Standard: 1920)',
                             'slide_height' => 'Höhe in Pixel (Standard: 1080)',
                             'is_published' => 'Veröffentlicht (öffentlich zugänglich)',
                             'folder_id' => 'Optional: Ordner-Zuordnung',
+                        ],
+                        'theme_structure' => [
+                            'colors' => 'Farbschema: primary, accent, text, background',
+                            'fonts' => 'Schriftarten: heading, body',
+                            'fontSizes' => [
+                                'description' => 'Schriftgrößen in px pro Zone. Werden als Default für neue Slides verwendet. Min: 12px, Max: 200px.',
+                                'keys' => [
+                                    'title' => 'Titel-Text (Standard: 80)',
+                                    'subtitle' => 'Untertitel-Text (Standard: 40)',
+                                    'body' => 'Fließtext/Beschreibung (Standard: 32)',
+                                    'bullets' => 'Aufzählungsliste (Standard: 30)',
+                                    'quote' => 'Zitat-Text (Standard: 42)',
+                                    'stats_number' => 'Kennzahl-Wert (Standard: 96)',
+                                    'stats_label' => 'Kennzahl-Label (Standard: 24)',
+                                    'section_title' => 'Kapitelüberschrift (Standard: 72)',
+                                    'contact' => 'Kontaktinfo (Standard: 24)',
+                                ],
+                            ],
                         ],
                     ],
                     'slides' => [

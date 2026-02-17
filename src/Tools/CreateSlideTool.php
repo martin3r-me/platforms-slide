@@ -102,10 +102,15 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
                     ->increment('sort_order');
             }
 
+            // Apply theme fontSizes to the template content
+            $content = $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
+            $themeFontSizes = $deck->theme['fontSizes'] ?? [];
+            $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
+
             $slideData = [
                 'sort_order' => $position,
                 'layout_key' => $layoutKey,
-                'content' => $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []],
+                'content' => $content,
                 'background' => $arguments['background'] ?? $layout['background'] ?? ['type' => 'color', 'value' => '#ffffff'],
                 'notes' => $arguments['notes'] ?? null,
                 'transition' => $arguments['transition'] ?? null,

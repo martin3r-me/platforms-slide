@@ -44,7 +44,7 @@ class UpdateDeckTool implements ToolContract, ToolMetadataContract
                 ],
                 'theme' => [
                     'type' => 'object',
-                    'description' => 'Optional: Theme aktualisieren. Wird mit bestehenden Werten gemerged.',
+                    'description' => 'Optional: Theme aktualisieren. Wird mit bestehenden Werten gemerged. Unterstützt: colors, fonts, fontSizes. fontSizes-Beispiel: {"fontSizes": {"title": 80, "subtitle": 40, "body": 32, "bullets": 30, "quote": 42, "stats_number": 96, "stats_label": 24, "section_title": 72, "contact": 24}}. Werte in px (min 12, max 200).',
                 ],
                 'folder_id' => [
                     'type' => 'integer',

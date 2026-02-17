@@ -73,6 +73,21 @@ class SlidesPresentation extends Model
         return $this->hasMany(SlidesMedia::class, 'presentation_id');
     }
 
+    public const FONT_SIZE_MIN = 12;
+    public const FONT_SIZE_MAX = 200;
+
+    public const DEFAULT_FONT_SIZES = [
+        'title' => 80,
+        'subtitle' => 40,
+        'body' => 32,
+        'bullets' => 30,
+        'quote' => 42,
+        'stats_number' => 96,
+        'stats_label' => 24,
+        'section_title' => 72,
+        'contact' => 24,
+    ];
+
     public function getDefaultTheme(): array
     {
         return [
@@ -86,6 +101,7 @@ class SlidesPresentation extends Model
                 'heading' => 'Open Sans',
                 'body' => 'Open Sans',
             ],
+            'fontSizes' => self::DEFAULT_FONT_SIZES,
             'defaultBackground' => [
                 'type' => 'color',
                 'value' => '#ffffff',
@@ -101,6 +117,20 @@ class SlidesPresentation extends Model
 
     public function setThemeAttribute($value): void
     {
-        $this->attributes['theme'] = is_array($value) ? json_encode($value) : $value;
+        $theme = is_array($value) ? $value : (json_decode($value, true) ?: []);
+
+        // Validate fontSizes if present
+        if (isset($theme['fontSizes']) && is_array($theme['fontSizes'])) {
+            $validKeys = array_keys(self::DEFAULT_FONT_SIZES);
+            $validated = [];
+            foreach ($theme['fontSizes'] as $key => $size) {
+                if (in_array($key, $validKeys, true) && is_numeric($size)) {
+                    $validated[$key] = max(self::FONT_SIZE_MIN, min(self::FONT_SIZE_MAX, (int) $size));
+                }
+            }
+            $theme['fontSizes'] = $validated;
+        }
+
+        $this->attributes['theme'] = json_encode($theme);
     }
 }

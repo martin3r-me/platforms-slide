@@ -34,10 +34,15 @@ class Show extends Component
         $layouts = SlidesSlideTemplate::systemLayouts();
         $layout = collect($layouts)->firstWhere('layout_key', $layoutKey);
 
+        // Apply theme fontSizes to the template content
+        $content = $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
+        $themeFontSizes = $this->presentation->theme['fontSizes'] ?? [];
+        $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
+
         $slide = $this->presentation->slides()->create([
             'sort_order' => $maxOrder + 1,
             'layout_key' => $layoutKey,
-            'content' => $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []],
+            'content' => $content,
             'background' => $layout['background'] ?? ['type' => 'color', 'value' => '#ffffff'],
         ]);
 
