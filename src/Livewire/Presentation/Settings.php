@@ -72,8 +72,8 @@ class Settings extends Component
         ]);
 
         // Preserve existing fontSizes and other theme data not managed by this UI
-        $existingTheme = $this->presentation->getAttributes()['theme'] ?? null;
-        $existingTheme = $existingTheme ? (is_array($existingTheme) ? $existingTheme : json_decode($existingTheme, true)) : [];
+        $rawTheme = $this->presentation->getRawOriginal('theme');
+        $existingTheme = $rawTheme ? json_decode($rawTheme, true) : [];
 
         $theme = [
             'colors' => [
@@ -97,9 +97,9 @@ class Settings extends Component
             $theme['fontSizes'] = $existingTheme['fontSizes'];
         }
 
-        // Build settings
-        $existingSettings = $this->presentation->getAttributes()['settings'] ?? null;
-        $existingSettings = $existingSettings ? (is_array($existingSettings) ? $existingSettings : json_decode($existingSettings, true)) : [];
+        // Build settings (bypass accessor to avoid merging defaults into persisted data)
+        $rawSettings = $this->presentation->getRawOriginal('settings');
+        $existingSettings = $rawSettings ? json_decode($rawSettings, true) : [];
 
         $settings = array_replace_recursive($existingSettings, [
             'slideNumber' => [

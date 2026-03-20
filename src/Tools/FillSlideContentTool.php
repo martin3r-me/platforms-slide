@@ -26,7 +26,7 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /slides/{id}/content - Befüllt die Platzhalter eines Slides mit Werten. WICHTIG: Nutze "slides.deck.GET" oder "slides.slides.GET" um die verfügbaren Platzhalter (zones) eines Slides zu sehen, bevor du dieses Tool nutzt. REST-Parameter: slide_id (required, integer). placeholders (required, object) - Key-Value-Paare von Zone-Name zu Inhalt. Werte können einfache Strings sein ODER Objekte mit Style-Overrides: {"title": {"value": "Mein Titel", "fontSize": 96, "color": "#FF0000", "align": "center"}}. Erlaubte Style-Properties: fontSize, color, align, fontWeight, fontStyle, letterSpacing, lineHeight.';
+        return 'PUT /slides/{id}/content - Befüllt die Platzhalter eines Slides mit Werten. WICHTIG: Nutze "slides.deck.GET" oder "slides.slides.GET" um die verfügbaren Platzhalter (zones) eines Slides zu sehen, bevor du dieses Tool nutzt. REST-Parameter: slide_id (required, integer). placeholders (required, object) - Key-Value-Paare von Zone-Name zu Inhalt. Werte können einfache Strings sein ODER Objekte mit Style-Overrides: {"title": {"value": "Mein Titel", "fontSize": 96, "color": "#FF0000", "align": "center"}}. Erlaubte Style-Properties: fontSize, color, align, fontWeight, fontStyle, letterSpacing, lineHeight, textShadow, textTransform, backgroundColor, padding, borderRadius, animation, animationDelay.';
     }
 
     public function getSchema(): array
@@ -44,7 +44,7 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
                         . 'Values können sein: (1) String mit dem Text/URL, (2) Objekt mit "value" und optionalen Style-Overrides. '
                         . 'Beispiel String-Format: {"title": "Mein Titel", "body": "Mein Text"} '
                         . 'Beispiel Objekt-Format: {"title": {"value": "Mein Titel", "fontSize": 96, "color": "#FF0000", "align": "center"}, "body": "Einfacher Text bleibt String"} '
-                        . 'Erlaubte Style-Properties: fontSize (number, px), color (string, hex), align (string: left/center/right), fontWeight (string/number), fontStyle (string: normal/italic), letterSpacing (number, px), lineHeight (number).',
+                        . 'Erlaubte Style-Properties: fontSize (number, px), color (string, hex), align (string: left/center/right), fontWeight (string/number), fontStyle (string: normal/italic), letterSpacing (number, px), lineHeight (number), textShadow (string, CSS), textTransform (string: uppercase/lowercase/capitalize/none), backgroundColor (string, hex/CSS), padding (number, px), borderRadius (number, px), animation (string: fadeInUp/fadeInLeft/scaleIn), animationDelay (number, seconds).',
                     'additionalProperties' => [
                         'oneOf' => [
                             ['type' => 'string'],
@@ -59,6 +59,13 @@ class FillSlideContentTool implements ToolContract, ToolMetadataContract
                                     'fontStyle' => ['type' => 'string', 'enum' => ['normal', 'italic'], 'description' => 'Schriftstil'],
                                     'letterSpacing' => ['type' => 'number', 'description' => 'Buchstabenabstand in px'],
                                     'lineHeight' => ['type' => 'number', 'description' => 'Zeilenhöhe (z.B. 1.2, 1.5)'],
+                                    'textShadow' => ['type' => 'string', 'description' => 'Text-Schatten (CSS, z.B. "2px 2px 4px rgba(0,0,0,0.3)")'],
+                                    'textTransform' => ['type' => 'string', 'enum' => ['uppercase', 'lowercase', 'capitalize', 'none'], 'description' => 'Text-Transformation'],
+                                    'backgroundColor' => ['type' => 'string', 'description' => 'Hintergrundfarbe (Hex/CSS)'],
+                                    'padding' => ['type' => 'number', 'description' => 'Innenabstand in px'],
+                                    'borderRadius' => ['type' => 'number', 'description' => 'Eckenradius in px'],
+                                    'animation' => ['type' => 'string', 'enum' => ['fadeInUp', 'fadeInLeft', 'scaleIn'], 'description' => 'Eingangs-Animation'],
+                                    'animationDelay' => ['type' => 'number', 'description' => 'Animations-Verzögerung in Sekunden'],
                                 ],
                                 'required' => ['value'],
                             ],

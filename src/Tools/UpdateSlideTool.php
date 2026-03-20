@@ -23,7 +23,7 @@ class UpdateSlideTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /slides/{id} - Aktualisiert einen bestehenden Slide. REST-Parameter: slide_id (required, integer). layout_key (optional, string) - Layout wechseln. background (optional, object). notes (optional, string). transition (optional, string). is_hidden (optional, boolean). col_ratio (optional, string) - Spalten-Verhältnis für two-column Layout, z.B. "60:40", "40:60", "70:30". Standard: "50:50".';
+        return 'PUT /slides/{id} - Aktualisiert einen bestehenden Slide. REST-Parameter: slide_id (required, integer). layout_key (optional, string) - Layout wechseln (16 Layouts verfügbar: title-center, title-center-dark, title-left, section-break, content-text, content-bullets, content-cards, two-column, comparison, agenda, image-right, image-left, image-full, quote, stats, closing). background (optional, object). notes (optional, string). transition (optional, string). is_hidden (optional, boolean). col_ratio (optional, string) - Spalten-Verhältnis für two-column Layout, z.B. "60:40", "40:60", "70:30". Standard: "50:50".';
     }
 
     public function getSchema(): array

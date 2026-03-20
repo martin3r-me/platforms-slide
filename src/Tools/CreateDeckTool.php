@@ -23,7 +23,7 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'POST /decks - Erstellt ein neues Deck (Präsentation). REST-Parameter: name (required, string) - Name. description (optional, string) - Beschreibung. folder_id (optional, integer) - Ordner. theme (optional, object) - Theme-Farben. initial_layout (optional, string) - Layout-Key für den ersten Slide (Standard: title-center).';
+        return 'POST /decks - Erstellt ein neues Deck (Präsentation). REST-Parameter: name (required, string) - Name. description (optional, string) - Beschreibung. folder_id (optional, integer) - Ordner. theme (optional, object) - Theme-Farben. theme_preset (optional, string) - Vordefiniertes Theme. initial_layout (optional, string) - Layout-Key für den ersten Slide (Standard: title-center). slides (optional, array) - Mehrere Slides mit Platzhaltern in einem Call erstellen (überschreibt initial_layout).';
     }
 
     public function getSchema(): array
@@ -66,6 +66,23 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 'theme_preset' => [
                     'type' => 'string',
                     'description' => 'Optional: Theme-Preset anwenden. Verfügbar: corporate-blue, corporate-dark, elegant-serif, modern-green, warm-minimal, gradient-purple, tech-dark. Überschreibt theme-Parameter falls beide angegeben.',
+                ],
+                'slides' => [
+                    'type' => 'array',
+                    'description' => 'Optional: Mehrere Slides direkt beim Erstellen des Decks anlegen. Jedes Objekt: {"layout_key": "...", "placeholders": {...}, "background": {...}, "notes": "...", "transition": "...", "col_ratio": "..."}. '
+                        . 'Wenn angegeben, wird der initial_layout-Parameter ignoriert und stattdessen diese Slides erstellt. '
+                        . 'Ermöglicht komplette Präsentationen in einem einzigen Tool-Call.',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'layout_key' => ['type' => 'string', 'description' => 'Layout-Key (Standard: content-text)'],
+                            'placeholders' => ['type' => 'object', 'description' => 'Platzhalter befüllen (Zone-Name → String oder Objekt mit Style-Overrides)'],
+                            'background' => ['type' => 'object', 'description' => 'Hintergrund'],
+                            'notes' => ['type' => 'string', 'description' => 'Speaker Notes'],
+                            'transition' => ['type' => 'string', 'description' => 'Übergangs-Effekt'],
+                            'col_ratio' => ['type' => 'string', 'description' => 'Spalten-Verhältnis für two-column'],
+                        ],
+                    ],
                 ],
             ],
             'required' => ['name'],
@@ -136,29 +153,91 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
 
             $deck = SlidesPresentation::create($deckData);
 
-            // Create initial slide
-            $layoutKey = $arguments['initial_layout'] ?? 'title-center';
             $layouts = SlidesSlideTemplate::systemLayouts();
-            $layout = collect($layouts)->firstWhere('layout_key', $layoutKey);
+            $themeFontSizes = $deck->theme['fontSizes'] ?? [];
+            $slidesData = $arguments['slides'] ?? null;
+            $createdSlides = [];
 
-            if (!$layout) {
-                $layout = collect($layouts)->firstWhere('layout_key', 'title-center');
-                $layoutKey = 'title-center';
+            if (!empty($slidesData) && is_array($slidesData)) {
+                // Multi-slide creation
+                foreach ($slidesData as $index => $slideSpec) {
+                    $layoutKey = $slideSpec['layout_key'] ?? 'content-text';
+                    $layout = collect($layouts)->firstWhere('layout_key', $layoutKey);
+
+                    if (!$layout) {
+                        $layout = collect($layouts)->firstWhere('layout_key', 'content-text');
+                        $layoutKey = 'content-text';
+                    }
+
+                    $content = $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
+                    $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
+
+                    // Apply col_ratio for two-column
+                    if (!empty($slideSpec['col_ratio']) && $layoutKey === 'two-column') {
+                        if (SlidesSlideTemplate::parseColRatio($slideSpec['col_ratio'])) {
+                            $content = SlidesSlideTemplate::applyColRatio($content, $slideSpec['col_ratio']);
+                        }
+                    }
+
+                    $slide = $deck->slides()->create([
+                        'sort_order' => $index,
+                        'layout_key' => $layoutKey,
+                        'content' => $content,
+                        'background' => $slideSpec['background'] ?? $layout['background'] ?? ['type' => 'color', 'value' => '#ffffff'],
+                        'notes' => $slideSpec['notes'] ?? null,
+                        'transition' => $slideSpec['transition'] ?? null,
+                    ]);
+
+                    // Fill placeholders if provided
+                    if (!empty($slideSpec['placeholders']) && is_array($slideSpec['placeholders'])) {
+                        $slide->fillPlaceholders($slideSpec['placeholders']);
+                        $slide->refresh();
+                    }
+
+                    $slideInfo = [
+                        'id' => $slide->id,
+                        'uuid' => $slide->uuid,
+                        'sort_order' => $index,
+                        'layout_key' => $layoutKey,
+                        'placeholders' => $slide->getPlaceholders(),
+                    ];
+
+                    if ($layoutKey === 'two-column') {
+                        $slideInfo['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';
+                    }
+
+                    $createdSlides[] = $slideInfo;
+                }
+            } else {
+                // Single initial slide (backward compatible)
+                $layoutKey = $arguments['initial_layout'] ?? 'title-center';
+                $layout = collect($layouts)->firstWhere('layout_key', $layoutKey);
+
+                if (!$layout) {
+                    $layout = collect($layouts)->firstWhere('layout_key', 'title-center');
+                    $layoutKey = 'title-center';
+                }
+
+                $content = $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
+                $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
+
+                $slide = $deck->slides()->create([
+                    'sort_order' => 0,
+                    'layout_key' => $layoutKey,
+                    'content' => $content,
+                    'background' => $layout['background'] ?? ['type' => 'color', 'value' => '#ffffff'],
+                ]);
+
+                $createdSlides[] = [
+                    'id' => $slide->id,
+                    'uuid' => $slide->uuid,
+                    'sort_order' => 0,
+                    'layout_key' => $layoutKey,
+                    'placeholders' => $slide->getPlaceholders(),
+                ];
             }
 
-            // Apply theme fontSizes to the template content
-            $content = $layout['content'] ?? ['version' => 1, 'mode' => 'layout', 'elements' => []];
-            $themeFontSizes = $deck->theme['fontSizes'] ?? [];
-            $content = SlidesSlideTemplate::applyThemeFontSizes($content, $themeFontSizes);
-
-            $slide = $deck->slides()->create([
-                'sort_order' => 0,
-                'layout_key' => $layoutKey,
-                'content' => $content,
-                'background' => $layout['background'] ?? ['type' => 'color', 'value' => '#ffffff'],
-            ]);
-
-            return ToolResult::success([
+            $response = [
                 'id' => $deck->id,
                 'uuid' => $deck->uuid,
                 'name' => $deck->name,
@@ -167,15 +246,13 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 'folder_id' => $deck->folder_id,
                 'slide_width' => $deck->slide_width,
                 'slide_height' => $deck->slide_height,
-                'initial_slide' => [
-                    'id' => $slide->id,
-                    'uuid' => $slide->uuid,
-                    'layout_key' => $slide->layout_key,
-                    'placeholders' => $slide->getPlaceholders(),
-                ],
+                'slides' => $createdSlides,
+                'slide_count' => count($createdSlides),
                 'created_at' => $deck->created_at->toIso8601String(),
-                'message' => "Deck '{$deck->name}' erfolgreich erstellt mit einem {$layoutKey}-Slide.",
-            ]);
+                'message' => "Deck '{$deck->name}' erfolgreich erstellt mit " . count($createdSlides) . " Slide(s).",
+            ];
+
+            return ToolResult::success($response);
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', 'Fehler beim Erstellen des Decks: ' . $e->getMessage());
         }

@@ -23,7 +23,7 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'POST /decks/{deck_id}/slides - Erstellt einen neuen Slide in einem Deck. REST-Parameter: deck_id (required), layout_key (optional, string - Standard: content-text). Verfügbare Layouts: title-center, title-left, section-break, content-text, content-bullets, two-column, image-right, image-left, image-full, quote, stats, closing. position (optional, integer) - Position im Deck (Standard: Ende). col_ratio (optional, string) - Spalten-Verhältnis für two-column Layout, z.B. "60:40", "40:60", "70:30". Standard: "50:50".';
+        return 'POST /decks/{deck_id}/slides - Erstellt einen neuen Slide in einem Deck. REST-Parameter: deck_id (required), layout_key (optional, string - Standard: content-text). Verfügbare Layouts (16): title-center, title-center-dark, title-left, section-break, content-text, content-bullets, content-cards, two-column, comparison, agenda, image-right, image-left, image-full, quote, stats, closing. position (optional, integer) - Position im Deck (Standard: Ende). col_ratio (optional, string) - Spalten-Verhältnis für two-column Layout, z.B. "60:40", "40:60", "70:30". Standard: "50:50". placeholders (optional, object) - Platzhalter direkt befüllen (spart einen extra Tool-Call).';
     }
 
     public function getSchema(): array
@@ -37,7 +37,7 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
                 ],
                 'layout_key' => [
                     'type' => 'string',
-                    'description' => 'Layout-Key für den Slide. Standard: "content-text". Verfügbar: title-center, title-left, section-break, content-text, content-bullets, two-column, image-right, image-left, image-full, quote, stats, closing.',
+                    'description' => 'Layout-Key für den Slide. Standard: "content-text". Verfügbar (16): title-center, title-center-dark, title-left, section-break, content-text, content-bullets, content-cards, two-column, comparison, agenda, image-right, image-left, image-full, quote, stats, closing.',
                 ],
                 'position' => [
                     'type' => 'integer',
@@ -58,6 +58,12 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
                 'col_ratio' => [
                     'type' => 'string',
                     'description' => 'Optional: Spalten-Verhältnis für two-column Layout. Format: "links:rechts", z.B. "60:40", "40:60", "70:30", "33:67". Summe muss 100 ergeben, Minimum pro Spalte: 10. Standard: "50:50".',
+                ],
+                'placeholders' => [
+                    'type' => 'object',
+                    'description' => 'Optional: Platzhalter direkt beim Erstellen befüllen (spart einen extra slides.slide.content.PUT Call). '
+                        . 'Key-Value-Paare: Keys sind Zone-Namen (z.B. "title", "body"), Values sind Strings oder Objekte mit Style-Overrides. '
+                        . 'Beispiel: {"title": "Mein Titel", "body": {"value": "Text", "fontSize": 28, "color": "#333"}}',
                 ],
             ],
             'required' => ['deck_id'],
@@ -134,6 +140,13 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
 
             $slide = $deck->slides()->create($slideData);
 
+            // Fill placeholders if provided
+            $placeholderResults = null;
+            if (!empty($arguments['placeholders']) && is_array($arguments['placeholders'])) {
+                $placeholderResults = $slide->fillPlaceholders($arguments['placeholders']);
+                $slide->refresh();
+            }
+
             $response = [
                 'id' => $slide->id,
                 'uuid' => $slide->uuid,
@@ -145,9 +158,15 @@ class CreateSlideTool implements ToolContract, ToolMetadataContract
                 'transition' => $slide->transition,
                 'notes' => $slide->notes,
                 'created_at' => $slide->created_at->toIso8601String(),
-                'message' => "Slide mit Layout '{$layoutKey}' an Position {$position} erstellt.",
-                'hint' => 'Nutze "slides.slide.content.PUT" um die Platzhalter dieses Slides mit Inhalten zu befüllen.',
+                'message' => "Slide mit Layout '{$layoutKey}' an Position {$position} erstellt."
+                    . ($placeholderResults ? ' ' . count(array_filter($placeholderResults)) . ' Platzhalter befüllt.' : ''),
             ];
+
+            if ($placeholderResults) {
+                $response['placeholder_results'] = $placeholderResults;
+            } else {
+                $response['hint'] = 'Nutze "slides.slide.content.PUT" um die Platzhalter dieses Slides mit Inhalten zu befüllen, oder übergib "placeholders" direkt beim Erstellen.';
+            }
 
             if ($slide->layout_key === 'two-column') {
                 $response['col_ratio'] = $slide->content['col_ratio'] ?? '50:50';

@@ -85,10 +85,10 @@
                             >
                                 <template x-if="element.type === 'text'">
                                     <div
-                                        class="w-full h-full overflow-hidden"
-                                        :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (element.style?.letterSpacing ? `letter-spacing: ${element.style.letterSpacing}px;` : '')"
+                                        class="w-full h-full overflow-hidden slide-text-render"
+                                        :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (element.style?.letterSpacing ? `letter-spacing: ${element.style.letterSpacing}px;` : '') + (element.style?.textShadow ? `text-shadow: ${element.style.textShadow};` : '') + (element.style?.textTransform ? `text-transform: ${element.style.textTransform};` : '') + (element.style?.backgroundColor ? `background-color: ${element.style.backgroundColor};` : '') + (element.style?.padding ? `padding: ${element.style.padding}px;` : '') + (element.style?.borderRadius ? `border-radius: ${element.style.borderRadius}px;` : '')"
                                         x-html="element.content?.html || ''"
-                                        x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
+                                        x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24))"
                                     ></div>
                                 </template>
                                 <template x-if="element.type === 'image' && element.content?.src">
@@ -126,6 +126,8 @@
 @include('slides::livewire.partials.auto-fit-text')
 
 @include('slides::livewire.partials.font-loader')
+
+@include('slides::livewire.partials.animation-styles')
 
 <script>
 document.addEventListener('alpine:init', () => {

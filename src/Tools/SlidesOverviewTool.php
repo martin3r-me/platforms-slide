@@ -44,11 +44,13 @@ class SlidesOverviewTool implements ToolContract, ToolMetadataContract
                             'name' => 'Name der Präsentation',
                             'description' => 'Beschreibung (optional)',
                             'theme' => 'Farben, Schriften und Schriftgrößen (JSON)',
+                            'settings' => 'Branding: logo, slideNumber, footer (JSON)',
                             'slide_width' => 'Breite in Pixel (Standard: 1920)',
                             'slide_height' => 'Höhe in Pixel (Standard: 1080)',
                             'is_published' => 'Veröffentlicht (öffentlich zugänglich)',
                             'folder_id' => 'Optional: Ordner-Zuordnung',
                         ],
+                        'theme_presets' => 'Vordefinierte Themes: corporate-blue, corporate-dark, elegant-serif, modern-green, warm-minimal, gradient-purple, tech-dark. Beim Erstellen via theme_preset Parameter setzen.',
                         'theme_structure' => [
                             'colors' => 'Farbschema: primary, accent, text, background',
                             'fonts' => 'Schriftarten: heading, body',
@@ -105,6 +107,13 @@ class SlidesOverviewTool implements ToolContract, ToolMetadataContract
                                 'fontStyle' => 'Schriftstil (normal, italic)',
                                 'letterSpacing' => 'Buchstabenabstand in px (z.B. 2)',
                                 'lineHeight' => 'Zeilenhöhe (z.B. 1.2, 1.5)',
+                                'textShadow' => 'Text-Schatten (CSS, z.B. "2px 2px 4px rgba(0,0,0,0.3)")',
+                                'textTransform' => 'Text-Transformation (uppercase, lowercase, capitalize, none)',
+                                'backgroundColor' => 'Hintergrundfarbe des Elements (Hex/CSS)',
+                                'padding' => 'Innenabstand in px',
+                                'borderRadius' => 'Eckenradius in px',
+                                'animation' => 'Eingangs-Animation (fadeInUp, fadeInLeft, scaleIn)',
+                                'animationDelay' => 'Animations-Verzögerung in Sekunden',
                             ],
                         ],
                         'common_zones' => [
@@ -129,20 +138,24 @@ class SlidesOverviewTool implements ToolContract, ToolMetadataContract
                         ],
                     ],
                     'templates' => [
-                        'description' => '12 System-Templates in 4 Kategorien',
+                        'description' => '16 System-Templates in 4 Kategorien',
                         'categories' => [
-                            'title' => ['title-center', 'title-left', 'section-break'],
-                            'content' => ['content-text', 'content-bullets', 'two-column', 'quote', 'stats'],
+                            'title' => ['title-center', 'title-center-dark', 'title-left', 'section-break'],
+                            'content' => ['content-text', 'content-bullets', 'content-cards', 'two-column', 'comparison', 'agenda', 'quote', 'stats'],
                             'media' => ['image-right', 'image-left', 'image-full'],
                             'closing' => ['closing'],
                         ],
                     ],
                 ],
                 'workflows' => [
+                    'create_complete_deck' => [
+                        'description' => 'Komplette Präsentation in einem einzigen Tool-Call erstellen',
+                        'step_1' => 'slides.decks.POST mit name, theme_preset und slides-Array (jedes Slide-Objekt enthält layout_key + placeholders)',
+                    ],
                     'create_deck_with_slides' => [
-                        'step_1' => 'Erstelle Deck (slides.decks.POST)',
-                        'step_2' => 'Erstelle Slides mit Layout-Templates (slides.slides.POST)',
-                        'step_3' => 'Befülle Platzhalter (slides.slide.content.PUT)',
+                        'description' => 'Mehrstufige Erstellung für mehr Kontrolle',
+                        'step_1' => 'Erstelle Deck (slides.decks.POST mit theme_preset)',
+                        'step_2' => 'Erstelle Slides mit Layout-Templates und Platzhaltern (slides.slides.POST mit placeholders)',
                     ],
                     'fill_existing_slide' => [
                         'step_1' => 'Lade Deck mit Slides (slides.deck.GET)',
