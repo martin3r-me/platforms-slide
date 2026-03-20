@@ -62,6 +62,14 @@ class UpdateDeckTool implements ToolContract, ToolMetadataContract
                     'type' => 'integer',
                     'description' => 'Optional: Slide-Höhe ändern.',
                 ],
+                'theme_preset' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Theme-Preset anwenden. Verfügbar: corporate-blue, corporate-dark, elegant-serif, modern-green, warm-minimal, gradient-purple, tech-dark. Wird mit bestehenden Werten gemerged, theme-Parameter hat Vorrang.',
+                ],
+                'settings' => [
+                    'type' => 'object',
+                    'description' => 'Optional: Präsentations-Settings aktualisieren. Wird mit bestehenden Werten gemerged. Struktur: {"logo": {"src": "url", "position": "top-right|top-left|bottom-right|bottom-left", "width": 120, "opacity": 1}, "slideNumber": {"enabled": true, "position": "bottom-right|bottom-left|top-right|top-left"}, "footer": {"enabled": true, "text": "Footer text", "position": "bottom-center|bottom-left|bottom-right"}}.',
+                ],
             ],
             'required' => ['deck_id'],
         ];
@@ -112,9 +120,27 @@ class UpdateDeckTool implements ToolContract, ToolMetadataContract
             if (isset($arguments['slide_height'])) {
                 $updateData['slide_height'] = $arguments['slide_height'];
             }
+            if (!empty($arguments['theme_preset'])) {
+                $preset = SlidesPresentation::getThemePreset($arguments['theme_preset']);
+                if ($preset) {
+                    $currentTheme = $deck->theme;
+                    $presetTheme = [
+                        'colors' => $preset['colors'],
+                        'fonts' => $preset['fonts'],
+                        'defaultBackground' => ['type' => 'color', 'value' => $preset['colors']['background']],
+                    ];
+                    $updateData['theme'] = array_replace_recursive($currentTheme, $presetTheme);
+                }
+            }
+
             if (isset($arguments['theme'])) {
-                $currentTheme = $deck->theme;
-                $updateData['theme'] = array_replace_recursive($currentTheme, $arguments['theme']);
+                $base = $updateData['theme'] ?? $deck->theme;
+                $updateData['theme'] = array_replace_recursive($base, $arguments['theme']);
+            }
+
+            if (isset($arguments['settings'])) {
+                $currentSettings = $deck->settings;
+                $updateData['settings'] = array_replace_recursive($currentSettings, $arguments['settings']);
             }
 
             if (!empty($updateData)) {

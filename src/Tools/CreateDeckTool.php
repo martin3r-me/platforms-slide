@@ -61,7 +61,11 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 ],
                 'initial_layout' => [
                     'type' => 'string',
-                    'description' => 'Optional: Layout-Key für den ersten Slide. Standard: "title-center". Verfügbar: title-center, title-left, section-break, content-text, content-bullets, two-column, image-right, image-left, image-full, quote, stats, closing.',
+                    'description' => 'Optional: Layout-Key für den ersten Slide. Standard: "title-center". Verfügbar: title-center, title-center-dark, title-left, section-break, content-text, content-bullets, content-cards, two-column, comparison, agenda, image-right, image-left, image-full, quote, stats, closing.',
+                ],
+                'theme_preset' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Theme-Preset anwenden. Verfügbar: corporate-blue, corporate-dark, elegant-serif, modern-green, warm-minimal, gradient-purple, tech-dark. Überschreibt theme-Parameter falls beide angegeben.',
                 ],
             ],
             'required' => ['name'],
@@ -106,8 +110,20 @@ class CreateDeckTool implements ToolContract, ToolMetadataContract
                 'team_id' => $teamId,
             ];
 
+            if (!empty($arguments['theme_preset'])) {
+                $preset = SlidesPresentation::getThemePreset($arguments['theme_preset']);
+                if ($preset) {
+                    $deckData['theme'] = [
+                        'colors' => $preset['colors'],
+                        'fonts' => $preset['fonts'],
+                        'defaultBackground' => ['type' => 'color', 'value' => $preset['colors']['background']],
+                    ];
+                }
+            }
+
             if (!empty($arguments['theme'])) {
-                $deckData['theme'] = $arguments['theme'];
+                $existing = $deckData['theme'] ?? [];
+                $deckData['theme'] = array_replace_recursive($existing, $arguments['theme']);
             }
 
             if (!empty($arguments['slide_width'])) {

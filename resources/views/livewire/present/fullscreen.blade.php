@@ -28,20 +28,22 @@
         {{-- Current Slide --}}
         <div
             class="absolute inset-0 origin-top-left"
+            :class="transitionClass"
+            :key="'slide-' + currentIndex"
             :style="`width: ${slideWidth}px; height: ${slideHeight}px; transform: scale(${scale});` + currentBackgroundStyle"
-            x-transition
         >
             <template x-for="element in currentSlide?.content?.elements || []" :key="element.id">
                 <div
                     class="absolute"
-                    :style="`left: ${element.x}px; top: ${element.y}px; width: ${element.width}px; height: ${element.height}px; z-index: ${element.zIndex || 1};`"
+                    :class="element.style?.animation ? 'el-anim-' + element.style.animation : ''"
+                    :style="`left: ${element.x}px; top: ${element.y}px; width: ${element.width}px; height: ${element.height}px; z-index: ${element.zIndex || 1};` + (element.style?.animationDelay ? `animation-delay: ${element.style.animationDelay}s;` : '')"
                 >
                     <template x-if="element.type === 'text'">
                         <div
-                            class="w-full h-full overflow-hidden"
-                            :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (element.style?.letterSpacing ? `letter-spacing: ${element.style.letterSpacing}px;` : '')"
+                            class="w-full h-full overflow-hidden slide-text-render"
+                            :style="`font-family: '${element.style?.fontFamily || 'Open Sans'}', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-weight: ${element.style?.fontWeight || '400'}; color: ${element.style?.color || '#333'}; text-align: ${element.style?.textAlign || 'left'}; line-height: ${element.style?.lineHeight || 1.4}; font-style: ${element.style?.fontStyle || 'normal'};` + (element.style?.letterSpacing ? `letter-spacing: ${element.style.letterSpacing}px;` : '') + (element.style?.textShadow ? `text-shadow: ${element.style.textShadow};` : '') + (element.style?.textTransform ? `text-transform: ${element.style.textTransform};` : '') + (element.style?.backgroundColor ? `background-color: ${element.style.backgroundColor};` : '') + (element.style?.padding ? `padding: ${element.style.padding}px;` : '') + (element.style?.borderRadius ? `border-radius: ${element.style.borderRadius}px;` : '')"
                             x-html="element.content?.html || ''"
-                            x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24, 18))"
+                            x-effect="$nextTick(() => window.__slideAutoFit($el, element.style?.fontSize || 24))"
                         ></div>
                     </template>
                     <template x-if="element.type === 'image' && element.content?.src">
@@ -54,6 +56,9 @@
                     </template>
                 </div>
             </template>
+
+            {{-- Persistent Elements (Logo, Slide Numbers, Footer) --}}
+            @include('slides::livewire.partials.persistent-elements', ['presentationSettings' => $presentation->settings])
         </div>
     </div>
 
@@ -101,10 +106,32 @@
 
 @include('slides::livewire.partials.auto-fit-text')
 
+@include('slides::livewire.partials.font-loader')
+
 @once
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+<style>
+    /* Slide Transitions */
+    @keyframes slideInLeft { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideInRight { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes zoomIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .slide-transition-fade { animation: fadeIn 0.5s ease-out; }
+    .slide-transition-slide-left { animation: slideInLeft 0.4s ease-out; }
+    .slide-transition-slide-right { animation: slideInRight 0.4s ease-out; }
+    .slide-transition-slide-up { animation: slideInUp 0.4s ease-out; }
+    .slide-transition-zoom { animation: zoomIn 0.4s ease-out; }
+
+    /* Element Animations */
+    @keyframes fadeInUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeInLeft { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .el-anim-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
+    .el-anim-fadeInLeft { animation: fadeInLeft 0.6s ease-out both; }
+    .el-anim-scaleIn { animation: scaleIn 0.5s ease-out both; }
+</style>
 @endonce
 
 <script>
@@ -166,6 +193,12 @@ document.addEventListener('alpine:init', () => {
 
         get currentSlide() {
             return this.slides[this.currentIndex] || null;
+        },
+
+        get transitionClass() {
+            const transition = this.currentSlide?.transition;
+            if (!transition) return '';
+            return 'slide-transition-' + transition;
         },
 
         get currentBackgroundStyle() {

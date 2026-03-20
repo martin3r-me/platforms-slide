@@ -4,33 +4,44 @@
     if (window.__slideAutoFit) return;
 
     /**
-     * Shrink-to-fit: reduces font-size until text fits within its container.
+     * Shrink-to-fit: reduces font-size via binary search until text fits within its container.
      *
      * @param {HTMLElement} el       - The text container element
      * @param {number}      basePx   - The original / desired font-size in px
-     * @param {number}      minPx    - The minimum font-size in px (default 18)
+     * @param {number}      minPx    - The minimum font-size in px (default 22)
      */
     window.__slideAutoFit = function(el, basePx, minPx) {
         if (!el || !el.parentElement) return;
 
-        minPx = minPx || 18;
+        minPx = minPx || 22;
         basePx = basePx || 24;
 
-        // Start with the original font-size
-        var size = basePx;
-        el.style.fontSize = size + 'px';
+        // Try the original font-size first
+        el.style.fontSize = basePx + 'px';
 
-        // Allow the browser to lay out the content, then check overflow
-        // We compare scrollHeight to clientHeight to detect vertical overflow
-        var step = 2;
-        var maxIterations = Math.ceil((basePx - minPx) / step) + 1;
+        // If it fits at base size, we're done
+        if (el.scrollHeight <= el.clientHeight + 1) return;
+
+        // Binary search for the largest size that fits
+        var lo = minPx;
+        var hi = basePx;
+        var maxIterations = 10;
         var iterations = 0;
 
-        while (el.scrollHeight > el.clientHeight + 1 && size > minPx && iterations < maxIterations) {
-            size = Math.max(minPx, size - step);
-            el.style.fontSize = size + 'px';
+        while (hi - lo > 1 && iterations < maxIterations) {
+            var mid = Math.floor((lo + hi) / 2);
+            el.style.fontSize = mid + 'px';
+
+            if (el.scrollHeight > el.clientHeight + 1) {
+                hi = mid;
+            } else {
+                lo = mid;
+            }
             iterations++;
         }
+
+        // Use the last known fitting size
+        el.style.fontSize = lo + 'px';
     };
 })();
 </script>

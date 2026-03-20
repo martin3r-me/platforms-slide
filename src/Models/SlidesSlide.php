@@ -81,6 +81,13 @@ class SlidesSlide extends Model
         'fontStyle',
         'letterSpacing',
         'lineHeight',
+        'textShadow',
+        'textTransform',
+        'backgroundColor',
+        'padding',
+        'borderRadius',
+        'animation',
+        'animationDelay',
     ];
 
     /**

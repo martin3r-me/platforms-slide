@@ -18,6 +18,12 @@ class Settings extends Component
     public bool $isPublished = false;
     public ?string $publicToken = null;
 
+    // Branding (Settings)
+    public bool $slideNumberEnabled = false;
+    public string $slideNumberPosition = 'bottom-right';
+    public bool $footerEnabled = false;
+    public string $footerText = '';
+
     // Theme
     public string $colorPrimary = '#1a1a2e';
     public string $colorAccent = '#0f3460';
@@ -37,6 +43,13 @@ class Settings extends Component
         $this->slideHeight = $this->presentation->slide_height;
         $this->isPublished = $this->presentation->is_published;
         $this->publicToken = $this->presentation->public_token;
+
+        // Load branding settings
+        $settings = $this->presentation->settings;
+        $this->slideNumberEnabled = $settings['slideNumber']['enabled'] ?? false;
+        $this->slideNumberPosition = $settings['slideNumber']['position'] ?? 'bottom-right';
+        $this->footerEnabled = $settings['footer']['enabled'] ?? false;
+        $this->footerText = $settings['footer']['text'] ?? '';
 
         $theme = $this->presentation->theme;
         $this->colorPrimary = $theme['colors']['primary'] ?? '#1a1a2e';
@@ -84,6 +97,21 @@ class Settings extends Component
             $theme['fontSizes'] = $existingTheme['fontSizes'];
         }
 
+        // Build settings
+        $existingSettings = $this->presentation->getAttributes()['settings'] ?? null;
+        $existingSettings = $existingSettings ? (is_array($existingSettings) ? $existingSettings : json_decode($existingSettings, true)) : [];
+
+        $settings = array_replace_recursive($existingSettings, [
+            'slideNumber' => [
+                'enabled' => $this->slideNumberEnabled,
+                'position' => $this->slideNumberPosition,
+            ],
+            'footer' => [
+                'enabled' => $this->footerEnabled,
+                'text' => $this->footerText,
+            ],
+        ]);
+
         $this->presentation->update([
             'name' => $this->name,
             'description' => $this->description ?: null,
@@ -91,6 +119,7 @@ class Settings extends Component
             'slide_height' => $this->slideHeight,
             'is_published' => $this->isPublished,
             'theme' => $theme,
+            'settings' => $settings,
         ]);
 
         session()->flash('success', 'Einstellungen gespeichert.');
@@ -119,6 +148,23 @@ class Settings extends Component
         $this->publicToken = Str::random(64);
         $this->presentation->update(['public_token' => $this->publicToken]);
         session()->flash('success', 'Neuer öffentlicher Link generiert.');
+    }
+
+    public function applyPreset(string $presetKey)
+    {
+        $this->authorize('update', $this->presentation);
+
+        $preset = SlidesPresentation::getThemePreset($presetKey);
+        if (!$preset) {
+            return;
+        }
+
+        $this->colorPrimary = $preset['colors']['primary'];
+        $this->colorAccent = $preset['colors']['accent'];
+        $this->colorText = $preset['colors']['text'];
+        $this->colorBackground = $preset['colors']['background'];
+        $this->fontHeading = $preset['fonts']['heading'];
+        $this->fontBody = $preset['fonts']['body'];
     }
 
     public function render()

@@ -88,6 +88,152 @@ class SlidesPresentation extends Model
         'contact' => 24,
     ];
 
+    /**
+     * Returns all available theme presets.
+     * Each preset defines colors, fonts, and optional fontSizes overrides.
+     */
+    public static function themePresets(): array
+    {
+        return [
+            'corporate-blue' => [
+                'name' => 'Corporate Blue',
+                'colors' => [
+                    'primary' => '#1e3a5f',
+                    'accent' => '#2980b9',
+                    'text' => '#1a1a2e',
+                    'background' => '#ffffff',
+                ],
+                'fonts' => [
+                    'heading' => 'Montserrat',
+                    'body' => 'Open Sans',
+                ],
+            ],
+            'corporate-dark' => [
+                'name' => 'Corporate Dark',
+                'colors' => [
+                    'primary' => '#e0e0e0',
+                    'accent' => '#4fc3f7',
+                    'text' => '#f5f5f5',
+                    'background' => '#1a1a2e',
+                ],
+                'fonts' => [
+                    'heading' => 'Montserrat',
+                    'body' => 'Inter',
+                ],
+            ],
+            'elegant-serif' => [
+                'name' => 'Elegant Serif',
+                'colors' => [
+                    'primary' => '#2c2c2c',
+                    'accent' => '#8b6914',
+                    'text' => '#333333',
+                    'background' => '#faf8f5',
+                ],
+                'fonts' => [
+                    'heading' => 'Playfair Display',
+                    'body' => 'Lora',
+                ],
+            ],
+            'modern-green' => [
+                'name' => 'Modern Green',
+                'colors' => [
+                    'primary' => '#1b5e20',
+                    'accent' => '#43a047',
+                    'text' => '#212121',
+                    'background' => '#ffffff',
+                ],
+                'fonts' => [
+                    'heading' => 'Poppins',
+                    'body' => 'Inter',
+                ],
+            ],
+            'warm-minimal' => [
+                'name' => 'Warm Minimal',
+                'colors' => [
+                    'primary' => '#3e2723',
+                    'accent' => '#d84315',
+                    'text' => '#4e342e',
+                    'background' => '#fff8f0',
+                ],
+                'fonts' => [
+                    'heading' => 'Raleway',
+                    'body' => 'Open Sans',
+                ],
+            ],
+            'gradient-purple' => [
+                'name' => 'Gradient Purple',
+                'colors' => [
+                    'primary' => '#4a148c',
+                    'accent' => '#ce93d8',
+                    'text' => '#f3e5f5',
+                    'background' => '#1a0033',
+                ],
+                'fonts' => [
+                    'heading' => 'Poppins',
+                    'body' => 'Nunito Sans',
+                ],
+            ],
+            'tech-dark' => [
+                'name' => 'Tech Dark',
+                'colors' => [
+                    'primary' => '#00e676',
+                    'accent' => '#00bcd4',
+                    'text' => '#e0e0e0',
+                    'background' => '#121212',
+                ],
+                'fonts' => [
+                    'heading' => 'Inter',
+                    'body' => 'JetBrains Mono',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get a single theme preset by key. Returns null if not found.
+     */
+    public static function getThemePreset(string $key): ?array
+    {
+        return self::themePresets()[$key] ?? null;
+    }
+
+    /**
+     * Returns the default settings structure.
+     * Settings cover persistent elements: logo, slide numbers, footer.
+     */
+    public static function getDefaultSettings(): array
+    {
+        return [
+            'logo' => [
+                'src' => null,
+                'position' => 'top-right',
+                'width' => 120,
+                'opacity' => 1,
+            ],
+            'slideNumber' => [
+                'enabled' => false,
+                'position' => 'bottom-right',
+            ],
+            'footer' => [
+                'enabled' => false,
+                'text' => '',
+                'position' => 'bottom-center',
+            ],
+        ];
+    }
+
+    public function getSettingsAttribute($value): array
+    {
+        $settings = $value ? (is_array($value) ? $value : json_decode($value, true)) : [];
+        return array_replace_recursive(self::getDefaultSettings(), $settings ?: []);
+    }
+
+    public function setSettingsAttribute($value): void
+    {
+        $settings = is_array($value) ? $value : (json_decode($value, true) ?: []);
+        $this->attributes['settings'] = json_encode($settings);
+    }
+
     public function getDefaultTheme(): array
     {
         return [

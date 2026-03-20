@@ -36,6 +36,34 @@
                 </div>
             </x-ui-panel>
 
+            {{-- Theme Presets --}}
+            <x-ui-panel title="Theme Presets">
+                <div class="p-6">
+                    <p class="text-xs text-[var(--ui-muted)] mb-3">Wähle ein Preset, um Farben und Fonts zu übernehmen. Klicke dann auf "Speichern".</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                        @foreach(\Platform\Slides\Models\SlidesPresentation::themePresets() as $key => $preset)
+                            <button
+                                wire:click="applyPreset('{{ $key }}')"
+                                class="group relative rounded-xl border border-[var(--ui-border)]/40 overflow-hidden hover:border-[var(--ui-primary)]/60 hover:shadow-md transition-all text-left"
+                            >
+                                {{-- Color preview bar --}}
+                                <div class="h-16 flex" style="background-color: {{ $preset['colors']['background'] }};">
+                                    <div class="flex-1 flex flex-col justify-center px-3">
+                                        <div class="text-[11px] font-semibold truncate" style="font-family: '{{ $preset['fonts']['heading'] }}', sans-serif; color: {{ $preset['colors']['primary'] }};">Aa Heading</div>
+                                        <div class="text-[9px] truncate" style="font-family: '{{ $preset['fonts']['body'] }}', sans-serif; color: {{ $preset['colors']['text'] }};">Body text</div>
+                                    </div>
+                                    <div class="w-3 self-stretch" style="background-color: {{ $preset['colors']['accent'] }};"></div>
+                                </div>
+                                {{-- Name --}}
+                                <div class="px-3 py-1.5 bg-[var(--ui-muted-5)]">
+                                    <div class="text-[10px] font-medium text-[var(--ui-secondary)] truncate">{{ $preset['name'] }}</div>
+                                </div>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </x-ui-panel>
+
             {{-- Theme --}}
             <x-ui-panel title="Theme">
                 <div class="p-6 space-y-4">
@@ -73,31 +101,109 @@
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Überschrift-Font</label>
                             <x-ui-input-select wire:model="fontHeading">
-                                <option value="Open Sans">Open Sans</option>
-                                <option value="Source Sans 3">Source Sans 3</option>
-                                <option value="Nunito Sans">Nunito Sans</option>
-                                <option value="Inter">Inter</option>
-                                <option value="Arial">Arial</option>
-                                <option value="Georgia">Georgia</option>
-                                <option value="Helvetica">Helvetica</option>
-                                <option value="Times New Roman">Times New Roman</option>
-                                <option value="Verdana">Verdana</option>
+                                <optgroup label="Sans-Serif (Modern)">
+                                    <option value="Inter">Inter</option>
+                                    <option value="Montserrat">Montserrat</option>
+                                    <option value="Open Sans">Open Sans</option>
+                                    <option value="Poppins">Poppins</option>
+                                    <option value="Raleway">Raleway</option>
+                                    <option value="Nunito Sans">Nunito Sans</option>
+                                    <option value="Source Sans 3">Source Sans 3</option>
+                                </optgroup>
+                                <optgroup label="Serif (Elegant)">
+                                    <option value="Playfair Display">Playfair Display</option>
+                                    <option value="Merriweather">Merriweather</option>
+                                    <option value="Lora">Lora</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                </optgroup>
+                                <optgroup label="Monospace">
+                                    <option value="JetBrains Mono">JetBrains Mono</option>
+                                </optgroup>
+                                <optgroup label="System">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Verdana">Verdana</option>
+                                </optgroup>
                             </x-ui-input-select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-[var(--ui-secondary)] mb-1">Text-Font</label>
                             <x-ui-input-select wire:model="fontBody">
-                                <option value="Open Sans">Open Sans</option>
-                                <option value="Source Sans 3">Source Sans 3</option>
-                                <option value="Nunito Sans">Nunito Sans</option>
-                                <option value="Inter">Inter</option>
-                                <option value="Arial">Arial</option>
-                                <option value="Georgia">Georgia</option>
-                                <option value="Helvetica">Helvetica</option>
-                                <option value="Times New Roman">Times New Roman</option>
-                                <option value="Verdana">Verdana</option>
+                                <optgroup label="Sans-Serif (Modern)">
+                                    <option value="Inter">Inter</option>
+                                    <option value="Montserrat">Montserrat</option>
+                                    <option value="Open Sans">Open Sans</option>
+                                    <option value="Poppins">Poppins</option>
+                                    <option value="Raleway">Raleway</option>
+                                    <option value="Nunito Sans">Nunito Sans</option>
+                                    <option value="Source Sans 3">Source Sans 3</option>
+                                </optgroup>
+                                <optgroup label="Serif (Elegant)">
+                                    <option value="Playfair Display">Playfair Display</option>
+                                    <option value="Merriweather">Merriweather</option>
+                                    <option value="Lora">Lora</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                </optgroup>
+                                <optgroup label="Monospace">
+                                    <option value="JetBrains Mono">JetBrains Mono</option>
+                                </optgroup>
+                                <optgroup label="System">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Verdana">Verdana</option>
+                                </optgroup>
                             </x-ui-input-select>
                         </div>
+                    </div>
+                </div>
+            </x-ui-panel>
+
+            {{-- Branding --}}
+            <x-ui-panel title="Branding">
+                <div class="p-6 space-y-5">
+                    {{-- Slide-Nummern --}}
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <div class="text-xs font-medium text-[var(--ui-secondary)]">Slide-Nummern</div>
+                                <div class="text-[10px] text-[var(--ui-muted)]">Nummer auf jedem Slide anzeigen</div>
+                            </div>
+                            <button
+                                wire:click="$toggle('slideNumberEnabled')"
+                                class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors {{ $slideNumberEnabled ? 'bg-[var(--ui-primary)]' : 'bg-[var(--ui-muted-5)] border border-[var(--ui-border)]' }}"
+                            >
+                                <span class="inline-block h-3 w-3 rounded-full bg-white shadow transition-transform {{ $slideNumberEnabled ? 'translate-x-5' : 'translate-x-1' }}"></span>
+                            </button>
+                        </div>
+                        @if($slideNumberEnabled)
+                            <x-ui-input-select wire:model="slideNumberPosition">
+                                <option value="bottom-right">Unten rechts</option>
+                                <option value="bottom-left">Unten links</option>
+                                <option value="top-right">Oben rechts</option>
+                                <option value="top-left">Oben links</option>
+                            </x-ui-input-select>
+                        @endif
+                    </div>
+
+                    {{-- Footer-Text --}}
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <div class="text-xs font-medium text-[var(--ui-secondary)]">Footer-Text</div>
+                                <div class="text-[10px] text-[var(--ui-muted)]">Text am unteren Rand jedes Slides</div>
+                            </div>
+                            <button
+                                wire:click="$toggle('footerEnabled')"
+                                class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors {{ $footerEnabled ? 'bg-[var(--ui-primary)]' : 'bg-[var(--ui-muted-5)] border border-[var(--ui-border)]' }}"
+                            >
+                                <span class="inline-block h-3 w-3 rounded-full bg-white shadow transition-transform {{ $footerEnabled ? 'translate-x-5' : 'translate-x-1' }}"></span>
+                            </button>
+                        </div>
+                        @if($footerEnabled)
+                            <x-ui-input-text name="footerText" wire:model="footerText" placeholder="z.B. Firmenname | Vertraulich" />
+                        @endif
                     </div>
                 </div>
             </x-ui-panel>
