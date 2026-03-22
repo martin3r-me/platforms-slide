@@ -2,6 +2,7 @@
 
 namespace Platform\Slides;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +26,10 @@ class SlidesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Relation::morphMap([
+            'slides_presentation' => \Platform\Slides\Models\SlidesPresentation::class,
+        ]);
+
         $this->publishes([
             __DIR__.'/../config/slides.php' => config_path('slides.php'),
         ], 'config');
