@@ -15,7 +15,7 @@ class SlidesEntityLinkProvider implements EntityLinkProvider
     public function linkTypeConfig(): array
     {
         return [
-            'slides_presentation' => ['label' => 'Präsentationen', 'icon' => 'presentation-chart-bar', 'route' => null],
+            'slides_presentation' => ['label' => 'Präsentationen', 'singular' => 'Präsentation', 'icon' => 'presentation-chart-bar', 'route' => null],
         ];
     }
 
@@ -43,6 +43,11 @@ class SlidesEntityLinkProvider implements EntityLinkProvider
     }
 
     public function timeTrackableCascades(): array
+    {
+        return [];
+    }
+
+    public function activityChildren(string $morphAlias, array $linkableIds): array
     {
         return [];
     }
