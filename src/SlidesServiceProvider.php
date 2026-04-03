@@ -30,6 +30,14 @@ class SlidesServiceProvider extends ServiceProvider
             'slides_presentation' => \Platform\Slides\Models\SlidesPresentation::class,
         ]);
 
+        // EntityLinkProvider registrieren (loose Kopplung mit Organization-Modul)
+        try {
+            resolve(\Platform\Organization\Services\EntityLinkRegistry::class)
+                ->register(new \Platform\Slides\Organization\SlidesEntityLinkProvider());
+        } catch (\Throwable $e) {
+            // Organization-Modul nicht geladen
+        }
+
         $this->publishes([
             __DIR__.'/../config/slides.php' => config_path('slides.php'),
         ], 'config');
@@ -42,6 +50,7 @@ class SlidesServiceProvider extends ServiceProvider
             PlatformCore::registerModule([
                 'key'        => 'slides',
                 'title'      => 'Präsentationen',
+                'group'      => 'content',
                 'routing'    => config('slides.routing'),
                 'guard'      => config('slides.guard'),
                 'navigation' => config('slides.navigation'),
