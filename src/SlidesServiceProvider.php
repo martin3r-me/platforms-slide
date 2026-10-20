@@ -4,7 +4,6 @@ namespace Platform\Slides;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -45,7 +44,7 @@ class SlidesServiceProvider extends ServiceProvider
         if (
             config()->has('slides.routing') &&
             config()->has('slides.navigation') &&
-            Schema::hasTable('modules')
+            PlatformCore::modulesTableExists()
         ) {
             PlatformCore::registerModule([
                 'key'        => 'slides',
