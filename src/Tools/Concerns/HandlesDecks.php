@@ -108,6 +108,39 @@ trait HandlesDecks
         ];
     }
 
+    protected function versionToArray(\Platform\Slides\Models\SlidesDeckVersion $v): array
+    {
+        return [
+            'id' => $v->id,
+            'revision' => $v->revision,
+            'kind' => $v->kind,
+            'kind_label' => $v->kindLabel(),
+            'label' => $v->label,
+            'slide_count' => $v->slide_count,
+            'created_by' => $v->created_by,
+            'created_by_name' => $v->relationLoaded('creator') ? $v->creator?->name : null,
+            'created_at' => $v->created_at?->toIso8601String(),
+        ];
+    }
+
+    protected function assetToArray(\Platform\Slides\Models\SlidesAsset $a): array
+    {
+        return [
+            'id' => $a->id,
+            'uuid' => $a->uuid,
+            'deck_id' => $a->deck_id,
+            'name' => $a->original_name,
+            'mime_type' => $a->mime_type,
+            'size_kb' => (int) ceil($a->size / 1024),
+            'width' => $a->width,
+            'height' => $a->height,
+            'alt' => $a->alt,
+            'url' => $a->url(),
+            'img' => $a->imgTag(),
+            'created_at' => $a->created_at?->toIso8601String(),
+        ];
+    }
+
     protected function failure(\Throwable $e, string $what): ToolResult
     {
         if ($e instanceof \InvalidArgumentException) {

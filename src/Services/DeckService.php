@@ -18,6 +18,7 @@ use Platform\Slides\Themes\BhgTheme;
  * Use-Cases rund um Decks: anlegen/ändern, Folien per slide_key upserten (Batch), Reihenfolge, Löschen,
  * Duplizieren, lose Links. Jede Änderung erhöht die revision des Decks (Live-Aktualisierung).
  * Alles HTML/CSS wird beim Speichern bereinigt; die Hinweise (removed) gehen an den Aufrufer zurück.
+ * Vor jeder Änderung sichert VersionService::checkpoint() bei Bedarf den bisherigen Stand.
  */
 class DeckService
 {
@@ -67,6 +68,7 @@ class DeckService
             $attrs['title'] = trim((string) $data['title']);
         }
         if ($attrs !== []) {
+            $this->versions()->checkpoint($deck, $by);
             $deck->update($attrs);
             $deck->bumpRevision($by?->id);
         }
@@ -90,6 +92,7 @@ class DeckService
             throw new \InvalidArgumentException('Höchstens ' . self::MAX_SLIDES_PER_CALL . ' Folien pro Aufruf.');
         }
 
+        $this->versions()->checkpoint($deck, $by);
         $report = [];
         DB::transaction(function () use ($deck, $items, &$report) {
             $existing = SlidesDeckSlide::query()->where('deck_id', $deck->id)->get()->keyBy('slide_key');
@@ -160,6 +163,7 @@ class DeckService
         if ($unknown !== []) {
             throw new \InvalidArgumentException('Unbekannte Folien: ' . implode(', ', $unknown) . '.');
         }
+        $this->versions()->checkpoint($deck, $by);
         $ordered = array_values(array_unique($keys));
         foreach ($slides->keys() as $k) {
             if (! in_array($k, $ordered, true)) {
@@ -182,6 +186,9 @@ class DeckService
     public function deleteSlides(SlidesDeck $deck, array $keys, ?User $by = null): array
     {
         $slides = SlidesDeckSlide::query()->where('deck_id', $deck->id)->whereIn('slide_key', $keys)->get();
+        if ($slides->isNotEmpty()) {
+            $this->versions()->checkpoint($deck, $by);
+        }
         foreach ($slides as $s) {
             $s->delete();
         }
@@ -244,6 +251,11 @@ class DeckService
     public function document(SlidesDeck $deck, SlidesDeckSlide $slide): string
     {
         return SlideDocument::render($deck, $slide);
+    }
+
+    private function versions(): VersionService
+    {
+        return app(VersionService::class);
     }
 
     /** Positionen lückenlos 0..n-1; $moves (key → Zielposition) zuerst einsortieren. */

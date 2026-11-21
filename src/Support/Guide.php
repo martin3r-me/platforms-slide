@@ -18,6 +18,14 @@ class Guide
                 '3. Folien schreiben: slides.slides.PUT mit mehreren Folien pro Aufruf ({key, html, notes}). key ist stabil (z. B. "cover", "agenda", "kpis-2027").',
                 '4. Ändern: dieselbe key erneut senden (nur html oder nur notes genügt). Reihenfolge: slides.slides.order.PUT. Löschen: slides.slides.DELETE.',
                 '5. Die Antwort nennt je Folie, was der Sanitizer entfernt hat – beim nächsten Mal vermeiden.',
+                '6. Ergebnis ansehen: slides.preview.GET rendert die Folien im Browser, misst Überlauf, abgeschnittenen Text, Satzspiegel, Schriftgröße, kaputte Bilder und liefert je Folie ein Vorschaubild (image_url). Alle errors beheben, warnings prüfen, dann erneut prüfen. Erst danach fertig melden.',
+                '7. Vor einem größeren Umbau eines bestehenden Decks: slides.versions.POST {deck_id, label}. Zurück geht es mit slides.versions.GET → slides.versions.restore.POST (umkehrbar).',
+            ],
+            'images' => [
+                'Vorhandene Bilder: slides.assets.GET (liefert url und fertiges <img>-Snippet). Neue Bilder: slides.assets.POST mit context_file_id (in der Plattform hochgeladene Datei), data (Base64) oder svg (Quelltext).',
+                'Eigene Bilder statt fremder Hotlinks verwenden – fremde URLs können verschwinden oder im PDF fehlen.',
+                'Bild-Folien: <figure> mit <img style="width:100%;height:100%;object-fit:cover"> für Vollflächen, object-fit:contain für Logos und Screenshots. Immer alt-Text.',
+                'Diagramme lieber als inline <svg> (scharf, Theme-Farben) als als Bild.',
             ],
             'format' => [
                 'Eine Folie = genau ein <section> auf 1920×1080 px (Deck-Größe 4:3: 1440×1080). Das Theme setzt 128px Innenrand (nutzbar 1664×824).',
@@ -25,7 +33,7 @@ class Guide
                 'Gestalten über Theme-Klassen, nicht über Inline-Styles. Inline-style nur für Einzelfälle (z. B. Breite einer Spalte).',
                 'Kinder fließen (Flex-Spalte mit 40px Abstand). position:absolute nur für Fußzeile oder Dekor, mit fester Breite.',
                 'Keine Skripte, keine Formulare, keine iframes/object/embed, keine Event-Attribute – sie werden samt Inhalt entfernt (bei embed/object auch nachfolgender Inhalt); die Folie rendert ohne JavaScript.',
-                'Bilder: <img src="https://…" alt="…" width height> (oder kleine data:image-URIs). Diagramme als inline <svg aria-label="…">.',
+                'Bilder: <img src="https://…" alt="…" width height> – am besten eigene Bilder aus slides.assets.GET (oder kleine data:image-URIs). Diagramme als inline <svg aria-label="…">.',
             ],
             'allowed_elements' => 'section, div, span, p, h1–h6, ul, ol, li, br, b, i, u, em, strong, small, sup, sub, mark, code, pre, a (http/https/mailto/tel/#), img, table/thead/tbody/tfoot/tr/th/td/caption/col/colgroup, hr, figure, figcaption, blockquote, cite, header, footer, aside (Notizen), svg (+ g, path, rect, circle, ellipse, line, polyline, polygon, text, tspan, defs, linearGradient, radialGradient, stop, clipPath, mask, pattern, marker, title, desc, use (#ids), symbol, animate*, mpath).',
             'allowed_attributes' => 'class, style, role, title, lang, dir, data-*, aria-*; a: href,target; img: src,alt,width,height,loading; td/th: colspan,rowspan,scope; section: id (wird auf key gesetzt); SVG: Geometrie- und Präsentationsattribute.',

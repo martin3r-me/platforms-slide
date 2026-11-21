@@ -18,8 +18,9 @@ class SlideDocument
     /**
      * @param bool $static true = Standbild (Übersicht, Druck): Klickschritte (.fragment) sind sichtbar, keine Übergänge.
      *                     false = Präsentation: .fragment ist bis zum Klick verborgen; das Eltern-Fenster setzt .visible/.current-fragment.
+     * @param ?string $base Basis-URL für relative Pfade (nötig, wenn das Dokument außerhalb der Plattform gerendert wird: Headless-Chrome, PDF).
      */
-    public static function render(SlidesDeck $deck, SlidesDeckSlide|string $slide, bool $static = true): string
+    public static function render(SlidesDeck $deck, SlidesDeckSlide|string $slide, bool $static = true, ?string $base = null): string
     {
         $size = $deck->size instanceof DeckSize ? $deck->size : (DeckSize::tryFrom((string) $deck->size) ?? DeckSize::WIDE);
         $w = $size->width();
@@ -40,10 +41,13 @@ class SlideDocument
                 . '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' . htmlspecialchars($query, ENT_QUOTES) . '&display=swap">';
         }
 
-        $csp = "default-src 'none'; img-src 'self' https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:";
+        // Eigene Bilder (slides.assets) auch dann zulassen, wenn die Plattform ohne https läuft (lokal)
+        $own = self::origin((string) config('app.url'));
+        $csp = "default-src 'none'; img-src 'self'" . ($own ? ' ' . $own : '') . " https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:";
 
         return '<!doctype html><html><head><meta charset="utf-8">'
             . '<meta http-equiv="Content-Security-Policy" content="' . $csp . '">'
+            . ($base ? '<base href="' . htmlspecialchars(rtrim($base, '/') . '/', ENT_QUOTES) . '">' : '')
             . $fontLink
             . '<style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0;width:' . $w . 'px;height:' . $h . 'px;overflow:hidden;background:transparent}'
             . 'body>section{position:relative;width:' . $w . 'px;height:' . $h . 'px;overflow:hidden;margin:0}img,svg{max-width:100%}'
@@ -52,6 +56,16 @@ class SlideDocument
             . '<style>' . $theme . '</style>'
             . ($static ? '<style>.fragment,.fragment:not(.visible){opacity:1!important;visibility:visible!important;transform:none!important;transition:none!important}</style>' : '')
             . '</head><body class="' . ($static ? 'is-static' : 'is-live') . '">' . $html . '</body></html>';
+    }
+
+    private static function origin(string $url): ?string
+    {
+        $p = parse_url($url);
+        if (empty($p['scheme']) || empty($p['host']) || ! in_array($p['scheme'], ['http', 'https'], true)) {
+            return null;
+        }
+
+        return $p['scheme'] . '://' . $p['host'] . (isset($p['port']) ? ':' . $p['port'] : '');
     }
 
     /** @return string[] */

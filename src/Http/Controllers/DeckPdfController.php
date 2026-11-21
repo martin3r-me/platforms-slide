@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Platform\Slides\Models\SlidesDeck;
+use Platform\Slides\Rendering\Browser;
 use Platform\Slides\Rendering\SlideDocument;
 
 /**
@@ -18,16 +19,16 @@ class DeckPdfController extends Controller
     {
         Gate::authorize('view', $deck);
         $printUrl = route('slides.decks.pdf', $deck) . '?print=1';
-        if (! config('slides.pdf.server') || ! class_exists(\Spatie\Browsershot\Browsershot::class)) {
+        if (! config('slides.pdf.server') || ! Browser::available()) {
             return redirect()->to($printUrl);
         }
 
         $size = $deck->size;
-        $docs = $deck->slides()->where('is_hidden', false)->get()->map(fn ($s) => SlideDocument::render($deck, $s, true));
+        $docs = $deck->slides()->where('is_hidden', false)->get()->map(fn ($s) => SlideDocument::render($deck, $s, true, url('/')));
         $html = view('slides::pdf.document', ['docs' => $docs, 'w' => $size->width(), 'h' => $size->height(), 'title' => $deck->title])->render();
 
         try {
-            $pdf = \Spatie\Browsershot\Browsershot::html($html)
+            $pdf = Browser::make($html)
                 ->paperSize($size->width(), $size->height(), 'px')
                 ->margins(0, 0, 0, 0)
                 ->showBackground()

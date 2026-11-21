@@ -59,6 +59,10 @@ class SlidesServiceProvider extends ServiceProvider
             ModuleRouter::group('slides', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
             });
+            // Bilder und signierte Vorschauen ohne Login (iframes, PDF-Renderer und Agenten haben keine Session)
+            ModuleRouter::group('slides', function () {
+                $this->loadRoutesFrom(__DIR__.'/../routes/public.php');
+            }, false);
         }
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
@@ -70,10 +74,6 @@ class SlidesServiceProvider extends ServiceProvider
         $this->registerTools();
     }
 
-    /**
-     * Registriert Slides-Tools für die AI/Chat-Funktionalität.
-     * Folgt dem Vorbild des Planner-Moduls.
-     */
     /**
      * MCP-Tools (Präfix = Modul-Key „slides“). Regeln für Agenten: slides.guide.GET.
      */
@@ -95,6 +95,13 @@ class SlidesServiceProvider extends ServiceProvider
                 \Platform\Slides\Tools\ListLinksTool::class,
                 \Platform\Slides\Tools\CreateLinkTool::class,
                 \Platform\Slides\Tools\DeleteLinkTool::class,
+                \Platform\Slides\Tools\ListVersionsTool::class,
+                \Platform\Slides\Tools\CreateVersionTool::class,
+                \Platform\Slides\Tools\RestoreVersionTool::class,
+                \Platform\Slides\Tools\PreviewTool::class,
+                \Platform\Slides\Tools\ListAssetsTool::class,
+                \Platform\Slides\Tools\CreateAssetTool::class,
+                \Platform\Slides\Tools\DeleteAssetTool::class,
             ] as $tool) {
                 $registry->register(new $tool());
             }

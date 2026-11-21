@@ -50,6 +50,7 @@ trait SlidesTestHarness
 
         if (! \Illuminate\Support\Facades\Route::has('slides.dashboard')) {
             \Illuminate\Support\Facades\Route::middleware('web')->prefix('slides')->group($module . '/routes/web.php');
+            \Illuminate\Support\Facades\Route::middleware('web')->prefix('slides')->group($module . '/routes/public.php');
         }
         $this->app['router']->getRoutes()->refreshNameLookups();
         $this->app['router']->getRoutes()->refreshActionLookups();
