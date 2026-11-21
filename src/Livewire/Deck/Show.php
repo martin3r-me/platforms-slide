@@ -43,6 +43,9 @@ class Show extends Component
 
     public ?int $checkRevision = null;
 
+    /** true = im Browser gemessen; false = nur Inhaltsregeln (kein Headless-Browser). */
+    public bool $checkMeasured = false;
+
     public ?string $notice = null;
 
     public int $revision = 0;
@@ -154,9 +157,11 @@ class Show extends Component
         $slides = $this->deck->slides()->get();
         $layout = [];
         $this->notice = null;
+        $this->checkMeasured = false;
         if (Browser::available()) {
             try {
                 $layout = $svc->inspect($this->deck, $slides);
+                $this->checkMeasured = true;
             } catch (\Throwable $e) {
                 report($e);
                 $this->notice = 'Layout-Messung nicht möglich (kein Headless-Browser) – nur Inhaltsprüfung.';
@@ -223,6 +228,7 @@ class Show extends Component
             'assets' => SlidesAsset::query()->where('team_id', $this->deck->team_id)
                 ->where(fn ($q) => $q->where('deck_id', $this->deck->id)->orWhereNull('deck_id'))->orderByDesc('id')->limit(24)->get(),
             'check' => $this->check,
+            'checkMeasured' => $this->checkMeasured,
             'notice' => $this->notice,
             'checkStale' => $this->check !== null && $this->checkRevision !== (int) $this->deck->revision,
             'poll' => (int) config('slides.live_poll_seconds', 3),

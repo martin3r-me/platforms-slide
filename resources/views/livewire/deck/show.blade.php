@@ -181,8 +181,9 @@
                             <div class="flex flex-wrap items-center gap-1.5">
                                 @if($checkSummary['errors'])<x-nx-badge variant="danger" dot>{{ $checkSummary['errors'] }} Fehler</x-nx-badge>@endif
                                 @if($checkSummary['warnings'])<x-nx-badge variant="warning" dot>{{ $checkSummary['warnings'] }} Hinweise</x-nx-badge>@endif
-                                @if(! $checkSummary['errors'] && ! $checkSummary['warnings'])<x-nx-badge variant="success" dot>Alles im Rahmen</x-nx-badge>@endif
+                                @if(! $checkSummary['errors'] && ! $checkSummary['warnings'])<x-nx-badge :variant="$checkMeasured ? 'success' : 'neutral'" dot>{{ $checkMeasured ? 'Alles im Rahmen' : 'Inhalt ok' }}</x-nx-badge>@endif
                             </div>
+                            @unless($checkMeasured)<p class="m-0 text-xs text-[color:var(--nx-faint)]">Nur Inhaltsregeln – das Layout wurde nicht gemessen (kein Headless-Browser auf dem Server).</p>@endunless
                             @if($checkStale)<p class="m-0 text-xs text-[color:var(--nx-warning)]">Das Deck wurde seit der Prüfung geändert.</p>@endif
                         @endif
                         <x-nx-button size="sm" wire:click="runCheck" wire:loading.attr="disabled" wire:target="runCheck">
