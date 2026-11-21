@@ -42,7 +42,7 @@ class DeleteSlidesTool implements ToolContract, ToolMetadataContract
             if ($keys === []) {
                 return ToolResult::error('keys ist erforderlich.', 'VALIDATION_ERROR');
             }
-            $deleted = $this->service()->deleteSlides($deck, $keys);
+            $deleted = $this->service()->deleteSlides($deck, $keys, $context->user);
 
             return ToolResult::success([
                 'deleted' => $deleted,

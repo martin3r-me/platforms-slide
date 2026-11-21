@@ -55,3 +55,19 @@ Offen für den UI-Ausbau: Referentenansicht (Notizen, nächste Folie, Timer), Fr
 ## Tests
 
 `tests/run-in-taiste.sh tests/Feature/SanitizerTest.php tests/Feature/DeckToolsTest.php` (sqlite `:memory:` in der lokalen taiste-Kopie, PHP 8.4).
+
+## Präsentieren (UI)
+
+| Route | Komponente | Inhalt |
+|---|---|---|
+| `slides.dashboard` (`/slides`) | `slides.dashboard` | Karten mit Vorschau der ersten Folie, Suche (`?q=`), Statusfilter (`?status=`) |
+| `slides.decks.show` (`/slides/decks/{deck}?slide=<key>`) | `slides.deck.show` | große Folie, Filmstreifen, Notizen, Eckdaten, Status, Verknüpfungen, Duplizieren |
+| `slides.decks.present` (`/slides/decks/{deck}/present?slide=n`) | `slides.deck.present` | Vollbild-Bühne, ←/→/Leertaste/Klick, Klickschritte, F Vollbild, B schwarz, Fortschritt |
+| `slides.decks.presenter` (`/slides/decks/{deck}/presenter`) | `slides.deck.presenter` | aktuelle + nächste Folie, Notizen, Uhr, Timer, „Präsentation öffnen“ |
+| `slides.decks.pdf` (`/slides/decks/{deck}/pdf?print=1`) | `slides.deck.print-view` | eine Folie pro Seite im Folienformat, `?print=1` öffnet den Druckdialog |
+| `slides.decks.pdf.download` | `DeckPdfController` | serverseitiges PDF via spatie/browsershot – nur mit `SLIDES_PDF_SERVER=true`, sonst Weiterleitung auf die Druckansicht |
+
+- **Player** (`partials/player-script`): alle Folien als gestapelte iframes (sandbox ohne Skripte), Navigation im Browser ohne Server-Roundtrip. `?slide=n` ist 1-basiert und wird beim Blättern aktualisiert.
+- **Klickschritte**: `.fragment` (Zustand vor dem Klick), `.visible`, `.current-fragment`; Reihenfolge `data-fragment-index`, sonst Dokumentreihenfolge. Das Eltern-Fenster setzt die Klassen über `iframe.contentDocument` (`allow-same-origin`), die Folie selbst führt kein Skript aus. Übersicht/Druck rendern statisch (`SlideDocument::render(..., static: true)`), dort sind alle Schritte sichtbar.
+- **Sync**: `BroadcastChannel('slides-deck-<uuid>')` – Präsentation und Referentenansicht folgen einander (Navigation, schwarzer Bildschirm); die Referentenansicht fragt beim Öffnen den Stand ab.
+- **Live**: `wire:poll` prüft `revision`; Präsentation/Referentenansicht bekommen das Event `slides-updated` (Folien mit Inhalts-Hash) und setzen nur geänderte iframes neu – Position und Klickschritt bleiben. Die Deck-Ansicht verschlüsselt Folien per Hash (`wire:key`). `last_editor_user_id`/`last_edited_at` zeigen „aktualisiert von … vor …“; Tools setzen den User aus dem ToolContext.

@@ -15,7 +15,11 @@ use Platform\Slides\Security\CssSanitizer;
  */
 class SlideDocument
 {
-    public static function render(SlidesDeck $deck, SlidesDeckSlide|string $slide): string
+    /**
+     * @param bool $static true = Standbild (Übersicht, Druck): Klickschritte (.fragment) sind sichtbar, keine Übergänge.
+     *                     false = Präsentation: .fragment ist bis zum Klick verborgen; das Eltern-Fenster setzt .visible/.current-fragment.
+     */
+    public static function render(SlidesDeck $deck, SlidesDeckSlide|string $slide, bool $static = true): string
     {
         $size = $deck->size instanceof DeckSize ? $deck->size : (DeckSize::tryFrom((string) $deck->size) ?? DeckSize::WIDE);
         $w = $size->width();
@@ -42,9 +46,12 @@ class SlideDocument
             . '<meta http-equiv="Content-Security-Policy" content="' . $csp . '">'
             . $fontLink
             . '<style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0;width:' . $w . 'px;height:' . $h . 'px;overflow:hidden;background:transparent}'
-            . 'body>section{position:relative;width:' . $w . 'px;height:' . $h . 'px;overflow:hidden;margin:0}img,svg{max-width:100%}</style>'
+            . 'body>section{position:relative;width:' . $w . 'px;height:' . $h . 'px;overflow:hidden;margin:0}img,svg{max-width:100%}'
+            // Klickschritte (reveal.js-Semantik): .fragment bis zum Klick verborgen, .visible danach. Das Theme kann beides überschreiben.
+            . '.fragment{opacity:0;transition:opacity .35s ease,transform .35s ease}.fragment.visible{opacity:1}</style>'
             . '<style>' . $theme . '</style>'
-            . '</head><body>' . $html . '</body></html>';
+            . ($static ? '<style>.fragment,.fragment:not(.visible){opacity:1!important;visibility:visible!important;transform:none!important;transition:none!important}</style>' : '')
+            . '</head><body class="' . ($static ? 'is-static' : 'is-live') . '">' . $html . '</body></html>';
     }
 
     /** @return string[] */

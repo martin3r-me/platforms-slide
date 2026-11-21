@@ -49,7 +49,7 @@ class UpdateDeckTool implements ToolContract, ToolMetadataContract
                 return $error;
             }
             $data = array_intersect_key($arguments, array_flip(['title', 'description', 'size', 'status', 'theme_css', 'fonts', 'owner_user_id']));
-            ['deck' => $deck, 'removed' => $removed] = $this->service()->updateDeck($deck, $data);
+            ['deck' => $deck, 'removed' => $removed] = $this->service()->updateDeck($deck, $data, $context->user);
 
             return ToolResult::success([
                 'deck' => $this->deckToArray($deck, (bool) ($arguments['include_theme'] ?? false)),

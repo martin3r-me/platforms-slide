@@ -55,7 +55,7 @@ class UpsertSlidesTool implements ToolContract, ToolMetadataContract
                 return $error;
             }
             $items = is_array($arguments['slides'] ?? null) ? array_values($arguments['slides']) : [];
-            $result = $this->service()->upsertSlides($deck, $items);
+            $result = $this->service()->upsertSlides($deck, $items, $context->user);
             $created = count(array_filter($result['slides'], fn ($s) => $s['created']));
             $withRemoved = array_values(array_filter($result['slides'], fn ($s) => $s['removed'] !== []));
 

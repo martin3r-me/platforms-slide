@@ -55,7 +55,7 @@ class DeckService
     }
 
     /** @return array{deck:SlidesDeck, removed:string[]} */
-    public function updateDeck(SlidesDeck $deck, array $data): array
+    public function updateDeck(SlidesDeck $deck, array $data, ?User $by = null): array
     {
         if (array_key_exists('title', $data) && trim((string) $data['title']) === '') {
             throw new \InvalidArgumentException('title darf nicht leer sein.');
@@ -68,7 +68,7 @@ class DeckService
         }
         if ($attrs !== []) {
             $deck->update($attrs);
-            $deck->bumpRevision();
+            $deck->bumpRevision($by?->id);
         }
 
         return ['deck' => $deck->fresh(), 'removed' => $removed];
@@ -81,7 +81,7 @@ class DeckService
      * @param array<int,array{key:string, html?:string, notes?:?string, position?:int, is_hidden?:bool}> $items
      * @return array{slides:array<int,array{key:string, created:bool, removed:string[]}>, revision:int}
      */
-    public function upsertSlides(SlidesDeck $deck, array $items): array
+    public function upsertSlides(SlidesDeck $deck, array $items, ?User $by = null): array
     {
         if ($items === []) {
             throw new \InvalidArgumentException('slides darf nicht leer sein.');
@@ -143,7 +143,7 @@ class DeckService
             $this->normalizePositions($deck, $moves);
         });
 
-        $deck->bumpRevision();
+        $deck->bumpRevision($by?->id);
 
         return ['slides' => $report, 'revision' => $deck->revision];
     }
@@ -153,7 +153,7 @@ class DeckService
      *
      * @param string[] $keys
      */
-    public function orderSlides(SlidesDeck $deck, array $keys): int
+    public function orderSlides(SlidesDeck $deck, array $keys, ?User $by = null): int
     {
         $slides = SlidesDeckSlide::query()->where('deck_id', $deck->id)->orderBy('position')->orderBy('id')->get()->keyBy('slide_key');
         $unknown = array_diff($keys, $slides->keys()->all());
@@ -173,20 +173,20 @@ class DeckService
                 }
             }
         });
-        $deck->bumpRevision();
+        $deck->bumpRevision($by?->id);
 
         return $deck->revision;
     }
 
     /** @param string[] $keys @return string[] gelöschte Keys */
-    public function deleteSlides(SlidesDeck $deck, array $keys): array
+    public function deleteSlides(SlidesDeck $deck, array $keys, ?User $by = null): array
     {
         $slides = SlidesDeckSlide::query()->where('deck_id', $deck->id)->whereIn('slide_key', $keys)->get();
         foreach ($slides as $s) {
             $s->delete();
         }
         $this->normalizePositions($deck, []);
-        $deck->bumpRevision();
+        $deck->bumpRevision($by?->id);
 
         return $slides->pluck('slide_key')->all();
     }

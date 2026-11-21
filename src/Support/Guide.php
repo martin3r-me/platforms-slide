@@ -39,6 +39,7 @@ class Guide
                 'Fußzeile (Quelle, Seitenzahl) als <p class="footer"> – nichts anderes unterhalb von y=920.',
                 'Zahlen, Namen und Zitate nur aus Quellen übernehmen – nie erfinden. Fehlt etwas: Platzhalter in eckigen Klammern, z. B. [Umsatz 2026].',
             ],
+            'fragments' => 'Klickschritte wie reveal.js: Elemente mit class="fragment" erscheinen im Präsentationsmodus nacheinander per Klick (Reihenfolge: data-fragment-index, sonst Dokumentreihenfolge; gleicher Index = gemeinsamer Schritt). Die Klasse .fragment beschreibt den Zustand VOR dem Klick (Standard: unsichtbar), .fragment.visible danach, .fragment.current-fragment den jüngsten Schritt (z. B. um frühere Zeilen zu dimmen). In Übersicht, Druck und PDF sind alle Schritte sichtbar. Sparsam einsetzen – Klickschritte sind für das Tempo des Vortragenden, nicht als Dekoration.',
             'theme' => [
                 'key' => BhgTheme::KEY,
                 'fonts' => BhgTheme::fonts(),

@@ -42,7 +42,7 @@ class OrderSlidesTool implements ToolContract, ToolMetadataContract
             if ($keys === []) {
                 return ToolResult::error('keys ist erforderlich.', 'VALIDATION_ERROR');
             }
-            $revision = $this->service()->orderSlides($deck, $keys);
+            $revision = $this->service()->orderSlides($deck, $keys, $context->user);
 
             return ToolResult::success([
                 'order' => $deck->slides()->pluck('slide_key')->all(),

@@ -28,7 +28,7 @@ class SlidesDeck extends Model implements HasDisplayName
 
     protected $fillable = [
         'uuid', 'team_id', 'title', 'description', 'size', 'theme_css', 'fonts', 'status', 'revision',
-        'owner_user_id', 'created_by',
+        'owner_user_id', 'created_by', 'last_editor_user_id', 'last_edited_at',
     ];
 
     protected $casts = [
@@ -37,6 +37,7 @@ class SlidesDeck extends Model implements HasDisplayName
         'status' => DeckStatus::class,
         'fonts' => 'array',
         'revision' => 'integer',
+        'last_edited_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -71,11 +72,27 @@ class SlidesDeck extends Model implements HasDisplayName
         return $this->hasMany(SlidesDeckLink::class, 'deck_id');
     }
 
-    /** Revision erhöhen, ohne andere Felder anzufassen (für Live-Ansichten). */
-    public function bumpRevision(): void
+    public function lastEditor(): BelongsTo
     {
-        $this->newQuery()->whereKey($this->getKey())->increment('revision');
-        $this->revision = (int) $this->newQuery()->whereKey($this->getKey())->value('revision');
+        return $this->belongsTo(\Platform\Core\Models\User::class, 'last_editor_user_id');
+    }
+
+    /**
+     * Revision erhöhen (für Live-Ansichten) und festhalten, wer zuletzt geändert hat.
+     * Ohne $userId wird der angemeldete User genommen (UI); Tools übergeben den User aus dem ToolContext.
+     */
+    public function bumpRevision(?int $userId = null): void
+    {
+        $userId ??= \Illuminate\Support\Facades\Auth::id();
+        $extra = ['last_edited_at' => now()];
+        if ($userId) {
+            $extra['last_editor_user_id'] = $userId;
+        }
+        $this->newQuery()->whereKey($this->getKey())->increment('revision', 1, $extra);
+        $fresh = $this->newQuery()->whereKey($this->getKey())->first(['revision', 'last_editor_user_id', 'last_edited_at']);
+        $this->revision = (int) $fresh->revision;
+        $this->last_editor_user_id = $fresh->last_editor_user_id;
+        $this->last_edited_at = $fresh->last_edited_at;
     }
 
     public function getDisplayName(): ?string

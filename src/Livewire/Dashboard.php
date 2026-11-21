@@ -4,15 +4,21 @@ namespace Platform\Slides\Livewire;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Platform\Slides\Enums\DeckStatus;
 use Platform\Slides\Models\SlidesDeck;
+use Platform\Slides\Rendering\SlideDocument;
 use Platform\Slides\Services\DeckService;
 
-/** Übersicht der Decks des aktuellen Teams (Minimal-UI; Ausbau folgt). */
+/** Übersicht der Decks des aktuellen Teams: Karten mit Vorschau der ersten Folie, Suche, Statusfilter. */
 class Dashboard extends Component
 {
+    #[Url(as: 'status')]
     public string $statusFilter = '';
+
+    #[Url(as: 'q')]
+    public string $search = '';
 
     public bool $showCreate = false;
 
@@ -32,13 +38,31 @@ class Dashboard extends Component
     public function render()
     {
         $user = Auth::user();
-        $decks = SlidesDeck::query()->where('team_id', $user->currentTeam?->id)->withCount('slides')
+        $base = SlidesDeck::query()->where('team_id', $user->currentTeam?->id);
+        $counts = (clone $base)->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
+
+        $decks = $base->withCount(['slides' => fn ($q) => $q->where('is_hidden', false)])
+            ->with(['lastEditor:id,name', 'links'])
             ->when($this->statusFilter !== '', fn ($q) => $q->where('status', $this->statusFilter))
-            ->orderByDesc('updated_at')->get();
+            ->when(trim($this->search) !== '', function ($q) {
+                $term = '%' . trim($this->search) . '%';
+                $q->where(fn ($w) => $w->where('title', 'like', $term)->orWhere('description', 'like', $term));
+            })
+            ->orderByDesc('updated_at')->limit(60)->get();
+
+        // Vorschau: erste sichtbare Folie je Deck (statisch, alle Klickschritte sichtbar)
+        $previews = [];
+        foreach ($decks as $deck) {
+            $first = $deck->slides()->where('is_hidden', false)->first();
+            $previews[$deck->id] = $first ? SlideDocument::render($deck, $first, true) : null;
+        }
 
         return view('slides::livewire.dashboard', [
             'decks' => $decks,
-            'statusOptions' => array_map(fn ($s) => ['value' => $s->value, 'label' => $s->label()], DeckStatus::cases()),
+            'previews' => $previews,
+            'counts' => $counts,
+            'statusOptions' => DeckStatus::cases(),
+            'canCreate' => Gate::allows('create', SlidesDeck::class),
         ])->layout('platform::layouts.app');
     }
 }

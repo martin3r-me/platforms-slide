@@ -136,8 +136,9 @@ class DeckToolsTest extends TestCase
             ->assertSee('srcdoc=', false)
             ->assertSee('Content-Security-Policy', false)
             ->assertSee('Hallo');
-        $this->get(route('slides.decks.present', $deck))->assertOk()->assertSee('1 / 2');
-        $this->get(route('slides.decks.present', $deck) . '?slide=1')->assertOk()->assertSee('2 / 2');
+        // Präsentation: Zähler und Navigation laufen im Browser; der Startindex kommt aus ?slide=n (1-basiert)
+        $this->get(route('slides.decks.present', $deck))->assertOk()->assertSee("\\u0022index\\u0022:0", false);
+        $this->get(route('slides.decks.present', $deck) . '?slide=2')->assertOk()->assertSee("\\u0022index\\u0022:1", false);
         $this->get(route('slides.decks.pdf', $deck))->assertOk()->assertSee('@page', false);
 
         // Fremder User sieht das Deck nicht
