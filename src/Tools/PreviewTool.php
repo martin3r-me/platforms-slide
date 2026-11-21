@@ -65,7 +65,7 @@ class PreviewTool implements ToolContract, ToolMetadataContract
                     $layout = $svc->inspect($deck, $slides);
                 } catch (\Throwable $e) {
                     report($e);
-                    $browser = ['available' => false, 'error' => mb_substr($e->getMessage(), 0, 300)];
+                    $browser = ['available' => false, 'error' => Browser::errorSummary($e)];
                 }
             }
 
@@ -103,7 +103,7 @@ class PreviewTool implements ToolContract, ToolMetadataContract
                         $rows[$idx]['image_url'] = URL::temporarySignedRoute('slides.previews.show', now()->addMinutes($minutes), ['deck' => $deck->id, 'file' => basename($path)]);
                     } catch (\Throwable $e) {
                         report($e);
-                        $browser['error'] ??= mb_substr($e->getMessage(), 0, 300);
+                        $browser['error'] ??= Browser::errorSummary($e);
                         break;
                     }
                 }
