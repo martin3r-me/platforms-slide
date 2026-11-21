@@ -16,14 +16,18 @@ return [
     'sidebar' => [
         [
             'group' => 'Präsentationen',
-            'dynamic' => [
-                'model'     => \Platform\Slides\Models\SlidesFolder::class,
-                'team_based' => true,
-                'order_by'  => 'name',
-                'route'     => 'slides.folders.show',
-                'icon'      => 'heroicon-o-folder',
-                'label_key' => 'name',
+            'items' => [
+                [
+                    'label' => 'Alle Decks',
+                    'route' => 'slides.dashboard',
+                    'icon'  => 'heroicon-o-presentation-chart-bar',
+                ],
             ],
         ],
     ],
+
+    /*
+    | Live-Aktualisierung: Wie oft offene Ansichten die revision des Decks prüfen (Sekunden).
+    */
+    'live_poll_seconds' => env('SLIDES_LIVE_POLL_SECONDS', 3),
 ];

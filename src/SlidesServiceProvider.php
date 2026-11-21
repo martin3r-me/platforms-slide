@@ -9,10 +9,8 @@ use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
-use Platform\Slides\Models\SlidesFolder;
-use Platform\Slides\Models\SlidesPresentation;
-use Platform\Slides\Policies\FolderPolicy;
-use Platform\Slides\Policies\PresentationPolicy;
+use Platform\Slides\Models\SlidesDeck;
+use Platform\Slides\Policies\DeckPolicy;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -26,7 +24,7 @@ class SlidesServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Relation::morphMap([
-            'slides_presentation' => \Platform\Slides\Models\SlidesPresentation::class,
+            SlidesDeck::MORPH_ALIAS => SlidesDeck::class,
         ]);
 
         // EntityLinkProvider registrieren (loose Kopplung mit Organization-Modul)
@@ -61,11 +59,6 @@ class SlidesServiceProvider extends ServiceProvider
             ModuleRouter::group('slides', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
             });
-
-            // Public routes (without auth)
-            ModuleRouter::group('slides', function () {
-                $this->loadRoutesFrom(__DIR__.'/../routes/public.php');
-            }, requireAuth: false);
         }
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
@@ -81,32 +74,31 @@ class SlidesServiceProvider extends ServiceProvider
      * Registriert Slides-Tools für die AI/Chat-Funktionalität.
      * Folgt dem Vorbild des Planner-Moduls.
      */
+    /**
+     * MCP-Tools (Präfix = Modul-Key „slides“). Regeln für Agenten: slides.guide.GET.
+     */
     protected function registerTools(): void
     {
         try {
             $registry = resolve(\Platform\Core\Tools\ToolRegistry::class);
-
-            // Overview-Tool
-            $registry->register(new \Platform\Slides\Tools\SlidesOverviewTool());
-
-            // Deck-Tools (Präsentationen)
-            $registry->register(new \Platform\Slides\Tools\ListDecksTool());
-            $registry->register(new \Platform\Slides\Tools\GetDeckTool());
-            $registry->register(new \Platform\Slides\Tools\CreateDeckTool());
-            $registry->register(new \Platform\Slides\Tools\UpdateDeckTool());
-            $registry->register(new \Platform\Slides\Tools\DeleteDeckTool());
-
-            // Slide-Tools
-            $registry->register(new \Platform\Slides\Tools\ListSlidesTool());
-            $registry->register(new \Platform\Slides\Tools\CreateSlideTool());
-            $registry->register(new \Platform\Slides\Tools\UpdateSlideTool());
-            $registry->register(new \Platform\Slides\Tools\DeleteSlideTool());
-            $registry->register(new \Platform\Slides\Tools\SortSlidesTool());
-
-            // Content-Tool (Platzhalter befüllen)
-            $registry->register(new \Platform\Slides\Tools\FillSlideContentTool());
+            foreach ([
+                \Platform\Slides\Tools\GetGuideTool::class,
+                \Platform\Slides\Tools\ListDecksTool::class,
+                \Platform\Slides\Tools\CreateDeckTool::class,
+                \Platform\Slides\Tools\UpdateDeckTool::class,
+                \Platform\Slides\Tools\DeleteDeckTool::class,
+                \Platform\Slides\Tools\DuplicateDeckTool::class,
+                \Platform\Slides\Tools\ListSlidesTool::class,
+                \Platform\Slides\Tools\UpsertSlidesTool::class,
+                \Platform\Slides\Tools\DeleteSlidesTool::class,
+                \Platform\Slides\Tools\OrderSlidesTool::class,
+                \Platform\Slides\Tools\ListLinksTool::class,
+                \Platform\Slides\Tools\CreateLinkTool::class,
+                \Platform\Slides\Tools\DeleteLinkTool::class,
+            ] as $tool) {
+                $registry->register(new $tool());
+            }
         } catch (\Throwable $e) {
-            // Silent fail - ToolRegistry möglicherweise nicht verfügbar
             \Log::warning('Slides: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
         }
     }
@@ -138,7 +130,10 @@ class SlidesServiceProvider extends ServiceProvider
                 continue;
             }
 
-            $aliasPath = str_replace(['\\', '/'], '.', Str::kebab(str_replace('.php', '', $relativePath)));
+            // Je Segment kebab-casen, sonst wird aus Deck/Show "deck/-show"
+            $aliasPath = collect(preg_split('#[\\\\/]#', str_replace('.php', '', $relativePath)))
+                ->map(fn ($segment) => Str::kebab($segment))
+                ->implode('.');
             $alias = $prefix . '.' . $aliasPath;
 
             Livewire::component($alias, $class);
@@ -147,15 +142,6 @@ class SlidesServiceProvider extends ServiceProvider
 
     protected function registerPolicies(): void
     {
-        $policies = [
-            SlidesFolder::class => FolderPolicy::class,
-            SlidesPresentation::class => PresentationPolicy::class,
-        ];
-
-        foreach ($policies as $model => $policy) {
-            if (class_exists($model) && class_exists($policy)) {
-                Gate::policy($model, $policy);
-            }
-        }
+        Gate::policy(SlidesDeck::class, DeckPolicy::class);
     }
 }

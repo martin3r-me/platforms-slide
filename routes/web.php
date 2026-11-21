@@ -1,29 +1,20 @@
 <?php
 
+/**
+ * Slides-Routen (Prefix /slides über ModuleRouter).
+ *
+ * slides.dashboard      – Übersicht der Decks
+ * slides.decks.show     – Deck-Ansicht (alle Folien skaliert)
+ * slides.decks.present  – Präsentationsmodus (eine Folie, blättern, Live-Aktualisierung)
+ * slides.decks.pdf      – Druckansicht (alle Folien im Seitenformat, für „Als PDF drucken“)
+ */
+
 use Platform\Slides\Livewire\Dashboard;
-use Platform\Slides\Livewire\Folder\Show as FolderShow;
-use Platform\Slides\Livewire\Presentation\Show as PresentationShow;
-use Platform\Slides\Livewire\Presentation\Settings as PresentationSettings;
-use Platform\Slides\Livewire\Presentation\SlideEditor;
-use Platform\Slides\Livewire\Present\Fullscreen;
-use Platform\Slides\Livewire\Present\PresenterView;
+use Platform\Slides\Livewire\Deck\Present;
+use Platform\Slides\Livewire\Deck\PrintView;
+use Platform\Slides\Livewire\Deck\Show;
 
 Route::get('/', Dashboard::class)->name('slides.dashboard');
-
-Route::get('/folders/{slidesFolder}', FolderShow::class)
-    ->name('slides.folders.show');
-
-Route::get('/presentations/{slidesPresentation}', PresentationShow::class)
-    ->name('slides.presentations.show');
-
-Route::get('/presentations/{slidesPresentation}/settings', PresentationSettings::class)
-    ->name('slides.presentations.settings');
-
-Route::get('/presentations/{slidesPresentation}/slides/{slidesSlide}', SlideEditor::class)
-    ->name('slides.presentations.slides.edit');
-
-Route::get('/presentations/{slidesPresentation}/present', Fullscreen::class)
-    ->name('slides.presentations.present');
-
-Route::get('/presentations/{slidesPresentation}/presenter', PresenterView::class)
-    ->name('slides.presentations.presenter');
+Route::get('/decks/{deck}', Show::class)->name('slides.decks.show');
+Route::get('/decks/{deck}/present', Present::class)->name('slides.decks.present');
+Route::get('/decks/{deck}/pdf', PrintView::class)->name('slides.decks.pdf');

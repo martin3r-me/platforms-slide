@@ -1,6 +1,6 @@
 {
     "name": "martin3r/platform-slides",
-    "description": "Slides Module for Platform - Presentations with Layout-First Approach",
+    "description": "Slides Module for Platform - HTML slide decks written by people and agents, rendered sandboxed, live updated",
     "type": "library",
     "license": "MIT",
     "authors": [

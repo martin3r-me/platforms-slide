@@ -2,18 +2,18 @@
 
 namespace Platform\Slides\Tools;
 
-use Platform\Core\Contracts\ToolContract;
 use Platform\Core\Contracts\ToolContext;
-use Platform\Core\Contracts\ToolResult;
+use Platform\Core\Contracts\ToolContract;
 use Platform\Core\Contracts\ToolMetadataContract;
-use Platform\Slides\Models\SlidesPresentation;
-use Illuminate\Support\Facades\Gate;
+use Platform\Core\Contracts\ToolResult;
+use Platform\Slides\Tools\Concerns\HandlesDecks;
+use Platform\Slides\Models\SlidesDeck;
+use Platform\Slides\Models\SlidesDeckLink;
 
-/**
- * Tool zum Auflisten von Decks (Präsentationen) im Slides-Modul.
- */
 class ListDecksTool implements ToolContract, ToolMetadataContract
 {
+    use HandlesDecks;
+
     public function getName(): string
     {
         return 'slides.decks.GET';
@@ -21,7 +21,7 @@ class ListDecksTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'GET /decks?team_id={id}&search=...&folder_id={id} - Listet Decks (Präsentationen) auf. REST-Parameter: team_id (optional, integer) - Filter nach Team. search (optional, string) - Suchbegriff für Name. folder_id (optional, integer) - Filter nach Ordner. limit/offset (optional) - Pagination.';
+        return 'GET /slides/decks - Listet Präsentationen (Decks) des Teams. Einzelnes Deck: id (liefert zusätzlich die Folienübersicht ohne HTML). Filter: status (draft|ready|archived), search, linkable_type + linkable_id (Decks, die an ein Objekt gehängt sind, z. B. management_book_meeting #7), limit/offset.';
     }
 
     public function getSchema(): array
@@ -29,124 +29,66 @@ class ListDecksTool implements ToolContract, ToolMetadataContract
         return [
             'type' => 'object',
             'properties' => [
-                'team_id' => [
-                    'type' => 'integer',
-                    'description' => 'Optional: Team-ID. Wenn nicht angegeben, wird das aktuelle Team verwendet.',
-                ],
-                'search' => [
-                    'type' => 'string',
-                    'description' => 'Optional: Suchbegriff für Deck-Namen.',
-                ],
-                'folder_id' => [
-                    'type' => 'integer',
-                    'description' => 'Optional: Filtert nach Ordner-ID. Nutze null oder weglassen für alle.',
-                ],
-                'is_published' => [
-                    'type' => 'boolean',
-                    'description' => 'Optional: Filtert nach Veröffentlichungsstatus.',
-                ],
-                'limit' => [
-                    'type' => 'integer',
-                    'description' => 'Optional: Max. Anzahl Ergebnisse (Standard: 50).',
-                ],
-                'offset' => [
-                    'type' => 'integer',
-                    'description' => 'Optional: Offset für Pagination (Standard: 0).',
-                ],
+                'id' => ['type' => 'integer', 'description' => 'Optional: einzelnes Deck.'],
+                'team_id' => ['type' => 'integer', 'description' => 'Optional: Team (Default: aktuelles Team).'],
+                'status' => ['type' => 'string', 'enum' => \Platform\Slides\Enums\DeckStatus::values()],
+                'search' => ['type' => 'string', 'description' => 'Suche in Titel/Beschreibung.'],
+                'linkable_type' => ['type' => 'string', 'description' => 'Optional: Morph-Alias des verknüpften Objekts.'],
+                'linkable_id' => ['type' => 'integer', 'description' => 'Optional: ID des verknüpften Objekts.'],
+                'limit' => ['type' => 'integer'],
+                'offset' => ['type' => 'integer'],
             ],
-            'required' => [],
         ];
     }
 
     public function execute(array $arguments, ToolContext $context): ToolResult
     {
         try {
-            if (!$context->user) {
-                return ToolResult::error('AUTH_ERROR', 'Kein User im Kontext gefunden.');
-            }
-
-            $teamId = $arguments['team_id'] ?? null;
-            if (empty($teamId) || $teamId === 0) {
-                $teamId = $context->team?->id;
-            }
-
-            if (!$teamId) {
-                return ToolResult::error('MISSING_TEAM', 'Kein Team angegeben und kein Team im Kontext gefunden. Nutze "core.teams.GET" um Teams zu sehen.');
-            }
-
-            $query = SlidesPresentation::query()
-                ->where('team_id', $teamId)
-                ->with(['user', 'folder']);
-
-            if (!empty($arguments['search'])) {
-                $query->where('name', 'like', '%' . $arguments['search'] . '%');
-            }
-
-            if (isset($arguments['folder_id'])) {
-                $query->where('folder_id', $arguments['folder_id'] ?: null);
-            }
-
-            if (isset($arguments['is_published'])) {
-                $query->where('is_published', $arguments['is_published']);
-            }
-
-            $query->orderByDesc('updated_at');
-
-            $limit = min($arguments['limit'] ?? 50, 200);
-            $offset = $arguments['offset'] ?? 0;
-            $query->limit($limit)->offset($offset);
-
-            $decks = $query->get()->filter(function ($deck) use ($context) {
-                try {
-                    return Gate::forUser($context->user)->allows('view', $deck);
-                } catch (\Throwable $e) {
-                    return false;
+            if (! empty($arguments['id'])) {
+                ['deck' => $deck, 'error' => $error] = $this->findDeck(['deck_id' => $arguments['id']], $context);
+                if ($error) {
+                    return $error;
                 }
-            })->values();
 
-            $decksList = $decks->map(function ($deck) {
-                return [
-                    'id' => $deck->id,
-                    'uuid' => $deck->uuid,
-                    'name' => $deck->name,
-                    'description' => $deck->description,
-                    'folder_id' => $deck->folder_id,
-                    'folder_name' => $deck->folder?->name,
-                    'slide_count' => $deck->slides()->count(),
-                    'slide_width' => $deck->slide_width,
-                    'slide_height' => $deck->slide_height,
-                    'is_published' => $deck->is_published,
-                    'owner_user_id' => $deck->user_id,
-                    'owner_name' => $deck->user?->name ?? 'Unbekannt',
-                    'team_id' => $deck->team_id,
-                    'created_at' => $deck->created_at->toIso8601String(),
-                    'updated_at' => $deck->updated_at->toIso8601String(),
-                ];
-            })->toArray();
+                return ToolResult::success([
+                    'deck' => $this->deckToArray($deck),
+                    'slides' => $deck->slides()->get()->map(fn ($s) => $this->slideToArray($s, false))->all(),
+                    'links' => $deck->links()->get()->map(fn ($l) => $this->linkToArray($l))->all(),
+                ]);
+            }
+
+            ['team' => $team, 'error' => $error] = $this->resolveTeam($arguments, $context);
+            if ($error) {
+                return $error;
+            }
+            $query = SlidesDeck::query()->where('team_id', $team->id)->withCount('slides');
+            if (! empty($arguments['status'])) {
+                $query->where('status', $arguments['status']);
+            }
+            if (! empty($arguments['search'])) {
+                $term = '%' . $arguments['search'] . '%';
+                $query->where(fn ($q) => $q->where('title', 'like', $term)->orWhere('description', 'like', $term));
+            }
+            if (! empty($arguments['linkable_type']) && ! empty($arguments['linkable_id'])) {
+                $query->whereIn('id', SlidesDeckLink::query()->where('linkable_type', $arguments['linkable_type'])
+                    ->where('linkable_id', (int) $arguments['linkable_id'])->select('deck_id'));
+            }
+            $total = (clone $query)->count();
+            $limit = min(max((int) ($arguments['limit'] ?? 50), 1), 200);
+            $decks = $query->orderByDesc('updated_at')->skip(max((int) ($arguments['offset'] ?? 0), 0))->take($limit)->get();
 
             return ToolResult::success([
-                'decks' => $decksList,
-                'count' => count($decksList),
-                'team_id' => $teamId,
-                'message' => count($decksList) > 0
-                    ? count($decksList) . ' Deck(s) gefunden.'
-                    : 'Keine Decks gefunden.',
+                'decks' => $decks->map(fn ($d) => $this->deckToArray($d))->all(),
+                'total' => $total,
+                'team_id' => $team->id,
             ]);
         } catch (\Throwable $e) {
-            return ToolResult::error('EXECUTION_ERROR', 'Fehler beim Laden der Decks: ' . $e->getMessage());
+            return $this->failure($e, 'Laden der Decks');
         }
     }
 
     public function getMetadata(): array
     {
-        return [
-            'category' => 'query',
-            'tags' => ['slides', 'deck', 'list'],
-            'read_only' => true,
-            'requires_auth' => true,
-            'requires_team' => false,
-            'risk_level' => 'safe',
-            'idempotent' => true,
-        ];
+        return $this->meta('GET', ['decks', 'list']);
     }
 }
