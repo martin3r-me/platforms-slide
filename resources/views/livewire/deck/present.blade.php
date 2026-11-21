@@ -6,7 +6,7 @@
      x-data="slidesPlayer(@js($config))"
      @keydown.window="key($event)" @mousemove.window="touch()"
      @slides-updated.window="update($event.detail)"
-     :style="cursorIdle ? 'cursor:none' : ''"
+     :style="{ cursor: cursorIdle ? 'none' : '' }"
      style="position:fixed; inset:0; display:flex; flex-direction:column; background:var(--stage-bg); user-select:none;">
 
     {{-- Bühne --}}
@@ -18,13 +18,13 @@
             </div>
         </template>
         <div x-ref="stage" x-show="slides.length > 0"
-             :style="`width:min(100vw, calc(100vh * ${w} / ${h})); aspect-ratio:${w} / ${h};`"
+             :style="{ width: `min(100vw, calc(100vh * ${w} / ${h}))`, aspectRatio: `${w} / ${h}` }"
              style="position:relative; overflow:hidden; background:#000;">
             <div x-ref="stack" style="position:absolute; inset:0;">
                 <template x-for="(s, i) in slides" :key="s.key">
                     <iframe sandbox="allow-same-origin" tabindex="-1" :title="'Folie ' + (i + 1)" :data-key="s.key"
                             x-init="$el.dataset.hash = s.hash; $el.srcdoc = s.doc" @load="loaded(i)"
-                            :style="`visibility:${i === index ? 'visible' : 'hidden'}; transform:scale(${scale});`"
+                            :style="{ visibility: i === index ? 'visible' : 'hidden', transform: `scale(${scale})` }"
                             style="position:absolute; top:0; left:0; border:0; transform-origin:0 0; pointer-events:none;"
                             :width="w" :height="h"></iframe>
                 </template>
@@ -35,11 +35,11 @@
 
     {{-- Fortschritt --}}
     <div style="height:3px; background:rgba(255,255,255,.06);">
-        <div :style="`width:${slides.length ? ((index + 1) / slides.length) * 100 : 0}%`" style="height:100%; background:var(--stage-accent); opacity:.55; transition:width .25s ease;"></div>
+        <div :style="{ width: `${slides.length ? ((index + 1) / slides.length) * 100 : 0}%` }" style="height:100%; background:var(--stage-accent); opacity:.55; transition:width .25s ease;"></div>
     </div>
 
     {{-- Steuerleiste: blendet mit dem Mauszeiger aus --}}
-    <div :style="cursorIdle ? 'opacity:0; pointer-events:none' : 'opacity:1'"
+    <div :style="{ opacity: cursorIdle ? 0 : 1, pointerEvents: cursorIdle ? 'none' : '' }"
          style="position:absolute; left:0; right:0; bottom:3px; height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 18px;
                 background:linear-gradient(to top, rgba(14,16,19,.92), rgba(14,16,19,0)); transition:opacity .3s ease;">
         <a href="{{ route('slides.decks.show', $deck) }}" class="st-btn" title="Zurück zum Deck">

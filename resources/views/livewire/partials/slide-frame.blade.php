@@ -7,5 +7,5 @@
      x-data="{ s: 1 }" x-init="const r = () => s = $el.clientWidth / {{ $w }}; r(); new ResizeObserver(r).observe($el)">
     <iframe sandbox="allow-same-origin" srcdoc="{{ $doc }}" title="{{ $label ?? 'Folie' }}" loading="lazy"
             style="position:absolute; top:0; left:0; width: {{ $w }}px; height: {{ $h }}px; border:0; transform-origin: 0 0;"
-            :style="`transform: scale(${s})`"></iframe>
+            :style="{ transform: `scale(${s})` }"></iframe>
 </div>

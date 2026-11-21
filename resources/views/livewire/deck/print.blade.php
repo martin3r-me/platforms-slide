@@ -37,7 +37,7 @@
     </div>
     <div class="print-pages">
         @forelse($docs as $i => $doc)
-            <div class="print-page" :style="'zoom:' + z"><iframe sandbox="allow-same-origin" srcdoc="{{ $doc }}" title="Folie {{ $i + 1 }}" @load="done()"></iframe></div>
+            <div class="print-page" :style="{ zoom: z }"><iframe sandbox="allow-same-origin" srcdoc="{{ $doc }}" title="Folie {{ $i + 1 }}" @load="done()"></iframe></div>
         @empty
             <p class="st-muted" style="text-align:center;">Dieses Deck hat noch keine sichtbaren Folien.</p>
         @endforelse

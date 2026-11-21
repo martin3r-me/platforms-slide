@@ -24,7 +24,7 @@
             </div>
             <div style="text-align:right;">
                 <div class="st-faint" style="font-size:11px; letter-spacing:.06em; text-transform:uppercase;">Dauer</div>
-                <div style="font-size:20px; font-weight:600; font-variant-numeric:tabular-nums;" :style="paused && elapsed ? 'color:var(--stage-warn)' : ''" x-text="fmt(elapsed)"></div>
+                <div style="font-size:20px; font-weight:600; font-variant-numeric:tabular-nums;" :style="{ color: paused && elapsed ? 'var(--stage-warn)' : '' }" x-text="fmt(elapsed)"></div>
             </div>
             <div style="display:flex; gap:6px;">
                 <button type="button" class="st-btn" @click="toggleTimer()" x-text="paused ? (elapsed ? 'Fortsetzen' : 'Timer starten') : 'Pause'"></button>
@@ -49,13 +49,13 @@
                 </span>
             </div>
             <div style="flex:1; min-height:0; display:flex; align-items:flex-start; justify-content:center;">
-                <div x-ref="stage" :style="`width:min(100%, calc((100vh - 250px) * ${w} / ${h})); aspect-ratio:${w} / ${h};`"
+                <div x-ref="stage" :style="{ width: `min(100%, calc((100vh - 250px) * ${w} / ${h}))`, aspectRatio: `${w} / ${h}` }"
                      style="position:relative; overflow:hidden; background:#000; border-radius:6px; outline:1px solid var(--stage-line); cursor:pointer;" @click="next()">
                     <div x-ref="stack" style="position:absolute; inset:0;">
                         <template x-for="(s, i) in slides" :key="s.key">
                             <iframe sandbox="allow-same-origin" tabindex="-1" :title="'Folie ' + (i + 1)" :data-key="s.key"
                                     x-init="$el.dataset.hash = s.hash; $el.srcdoc = s.doc" @load="loaded(i)"
-                                    :style="`visibility:${i === index ? 'visible' : 'hidden'}; transform:scale(${scale});`"
+                                    :style="{ visibility: i === index ? 'visible' : 'hidden', transform: `scale(${scale})` }"
                                     style="position:absolute; top:0; left:0; border:0; transform-origin:0 0; pointer-events:none;"
                                     :width="w" :height="h"></iframe>
                         </template>
@@ -76,9 +76,9 @@
         <div style="display:flex; flex-direction:column; min-height:0; gap:16px;">
             <div>
                 <div class="st-faint" style="font-size:11px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Als Nächstes</div>
-                <div x-ref="nextBox" :style="`aspect-ratio:${w} / ${h};`" style="position:relative; overflow:hidden; background:#000; border-radius:6px; outline:1px solid var(--stage-line);">
+                <div x-ref="nextBox" :style="{ aspectRatio: `${w} / ${h}` }" style="position:relative; overflow:hidden; background:#000; border-radius:6px; outline:1px solid var(--stage-line);">
                     <iframe x-ref="next" sandbox="allow-same-origin" tabindex="-1" title="Nächste Folie"
-                            :style="`transform:scale(${nextScale}); visibility:${slides[index + 1] ? 'visible' : 'hidden'}`"
+                            :style="{ transform: `scale(${nextScale})`, visibility: slides[index + 1] ? 'visible' : 'hidden' }"
                             style="position:absolute; top:0; left:0; border:0; transform-origin:0 0; pointer-events:none;"
                             :width="w" :height="h"></iframe>
                     <div x-show="!slides[index + 1]" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
