@@ -18,7 +18,7 @@ class Guide
                 '3. Folien schreiben: slides.slides.PUT mit mehreren Folien pro Aufruf ({key, html, notes}). key ist stabil (z. B. "cover", "agenda", "kpis-2027").',
                 '4. Ändern: dieselbe key erneut senden (nur html oder nur notes genügt). Reihenfolge: slides.slides.order.PUT. Löschen: slides.slides.DELETE.',
                 '5. Die Antwort nennt je Folie, was der Sanitizer entfernt hat – beim nächsten Mal vermeiden.',
-                '6. Ergebnis ansehen: slides.preview.GET rendert die Folien im Browser, misst Überlauf, abgeschnittenen Text, Satzspiegel, Schriftgröße, kaputte Bilder und liefert je Folie ein Vorschaubild (image_url). Alle errors beheben, warnings prüfen, dann erneut prüfen. Erst danach fertig melden.',
+                '6. Ergebnis ansehen: slides.preview.GET rendert die Folien im Browser, misst Überlauf, abgeschnittenen Text, Satzspiegel, Schriftgröße, kaputte Bilder und hängt die Vorschaubilder direkt an die Antwort (bis zu 6, Folien mit Problemen zuerst) – du siehst also, was du gebaut hast; weitere über keys oder image_url. Bilder kritisch ansehen (Hierarchie, Weißraum, Lesbarkeit), nicht nur die Messwerte. Alle errors beheben, warnings prüfen, dann erneut prüfen. Erst danach fertig melden.',
                 '7. Vor einem größeren Umbau eines bestehenden Decks: slides.versions.POST {deck_id, label}. Zurück geht es mit slides.versions.GET → slides.versions.restore.POST (umkehrbar).',
             ],
             'images' => [

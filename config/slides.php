@@ -68,6 +68,7 @@ return [
         'disk' => env('SLIDES_PREVIEW_DISK', 'local'),
         'url_minutes' => env('SLIDES_PREVIEW_URL_MINUTES', 60),
         'max_screenshots' => 8,
+        'max_inline_images' => 6, // direkt an die MCP-Antwort gehängt (Core-Limit 6)
     ],
 
     /*

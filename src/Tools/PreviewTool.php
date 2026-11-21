@@ -2,6 +2,7 @@
 
 namespace Platform\Slides\Tools;
 
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Platform\Core\Contracts\ToolContext;
 use Platform\Core\Contracts\ToolContract;
@@ -22,7 +23,7 @@ class PreviewTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'GET /slides/decks/{id}/preview - Zeigt dir, was du gebaut hast: rendert die Folien im Headless-Chrome und meldet je Folie gemessene Layout-Probleme (overflow = ragt über die Folie, clipped = Text abgeschnitten, outside_safe_area, small_text, image_broken, overlap, empty) plus Inhaltshinweise (dense, many_bullets, no_heading, placeholder, no_notes) und den Füllgrad (fill % der nutzbaren Höhe). Dazu je Folie image_url: JPEG-Vorschau (signierter Link, ca. 60 Min. gültig) zum Ansehen. Nach jedem Schreiben aufrufen; errors beheben, warnings prüfen. Pflicht: deck_id. Optional: keys (nur diese Folien), screenshots (Default true; max. 8 Bilder pro Aufruf – bei größeren Decks ohne keys bekommen zuerst Folien mit Problemen ein Bild), width (Bildbreite 320–1920, Default 960).';
+        return 'GET /slides/decks/{id}/preview - Zeigt dir, was du gebaut hast: rendert die Folien im Headless-Chrome und meldet je Folie gemessene Layout-Probleme (overflow = ragt über die Folie, clipped = Text abgeschnitten, outside_safe_area, small_text, image_broken, overlap, empty) plus Inhaltshinweise (dense, many_bullets, no_heading, placeholder, no_notes) und den Füllgrad (fill % der nutzbaren Höhe). Die Vorschaubilder (bis zu 6, Folien mit Problemen zuerst) hängen direkt an der Antwort – du siehst die Folien; zusätzlich je Folie image_url (signierter Link, ca. 60 Min. gültig). Nach jedem Schreiben aufrufen; errors beheben, warnings prüfen. Pflicht: deck_id. Optional: keys (nur diese Folien), screenshots (Default true; max. 8 Bilder pro Aufruf – bei größeren Decks ohne keys bekommen zuerst Folien mit Problemen ein Bild), width (Bildbreite 320–1920, Default 960).';
     }
 
     public function getSchema(): array
@@ -84,6 +85,7 @@ class PreviewTool implements ToolContract, ToolMetadataContract
             })->all();
 
             $shotNote = null;
+            $shots = []; // Reihenfolge wie erzeugt (Folien mit Problemen zuerst)
             if (($arguments['screenshots'] ?? true) && $browser['available']) {
                 $max = (int) config('slides.preview.max_screenshots', 8);
                 $order = array_keys($rows);
@@ -97,6 +99,7 @@ class PreviewTool implements ToolContract, ToolMetadataContract
                 foreach (array_slice($order, 0, $max) as $idx) {
                     try {
                         $path = $svc->screenshot($deck, $byKey[$rows[$idx]['key']], $width);
+                        $shots[] = ['path' => $path, 'key' => $rows[$idx]['key']];
                         $rows[$idx]['image_url'] = URL::temporarySignedRoute('slides.previews.show', now()->addMinutes($minutes), ['deck' => $deck->id, 'file' => basename($path)]);
                     } catch (\Throwable $e) {
                         report($e);
@@ -109,7 +112,18 @@ class PreviewTool implements ToolContract, ToolMetadataContract
             $errors = array_sum(array_column($rows, 'errors'));
             $warnings = array_sum(array_column($rows, 'warnings'));
 
-            return ToolResult::success([
+            // Bilder direkt in der MCP-Antwort mitgeben, damit der Agent sein Ergebnis sieht (Core ab e0788ad8)
+            $maxInline = (int) config('slides.preview.max_inline_images', 6);
+            $inline = method_exists(ToolResult::class, 'withImage') ? array_slice($shots, 0, $maxInline) : [];
+            foreach ($rows as &$row) {
+                $row['image_attached'] = in_array($row['key'], array_column($inline, 'key'), true);
+            }
+            unset($row);
+            if (count($shots) > count($inline) && $inline !== []) {
+                $shotNote = trim(($shotNote ?? '') . ' Direkt angehängt sind ' . count($inline) . ' Bilder (' . implode(', ', array_column($inline, 'key')) . '); weitere nur über image_url.');
+            }
+
+            $result = ToolResult::success([
                 'deck_id' => $deck->id,
                 'revision' => $deck->revision,
                 'browser_check' => $browser['available'] ? 'ok' : 'unavailable',
@@ -118,8 +132,15 @@ class PreviewTool implements ToolContract, ToolMetadataContract
                 'slides' => $rows,
                 'note' => $shotNote,
                 'message' => ($browser['available'] ? '' : 'Kein Headless-Browser verfügbar – nur Inhaltsprüfung, keine Layout-Messung und keine Bilder. ')
-                    . ($errors + $warnings === 0 ? 'Keine Probleme gefunden.' : "{$errors} Fehler, {$warnings} Warnungen."),
+                    . ($errors + $warnings === 0 ? 'Keine Probleme gefunden.' : "{$errors} Fehler, {$warnings} Warnungen.")
+                    . ($inline ? ' Vorschaubilder sind angehängt (Reihenfolge: ' . implode(', ', array_column($inline, 'key')) . ').' : ''),
             ]);
+            $disk = Storage::disk($svc->disk());
+            foreach ($inline as $shot) {
+                $result = $result->withImage((string) $disk->get($shot['path']), 'image/jpeg');
+            }
+
+            return $result;
         } catch (\Throwable $e) {
             return $this->failure($e, 'Prüfen der Folien');
         }

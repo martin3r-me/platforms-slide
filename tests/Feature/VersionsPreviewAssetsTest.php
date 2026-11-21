@@ -198,6 +198,11 @@ class VersionsPreviewAssetsTest extends TestCase
         $this->assertSame([], array_values(array_filter($by['agenda']['issues'], fn ($i) => $i['level'] === 'error')), json_encode($by['agenda']));
         $this->assertIsInt($by['agenda']['fill']);
 
+        if (method_exists($r, 'withImage')) {
+            $this->assertCount(4, $r->images, 'alle 4 Vorschauen angehängt');
+            $this->assertSame('image/jpeg', $r->images[0]['mime']);
+            $this->assertTrue($by['zuviel']['image_attached']);
+        }
         $url = $by['cover']['image_url'];
         $this->assertNotNull($url);
         auth()->logout();
